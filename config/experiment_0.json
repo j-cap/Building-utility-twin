@@ -1,0 +1,14 @@
+{
+  "experiment_id": "iteration_a_experiment_0",
+  "asset_id": "pipe-001",
+  "meter_id": "meter-001",
+  "start_utc": "2026-01-15T00:00:00Z",
+  "duration_seconds": 86400,
+  "step_seconds": 60,
+  "seed": 20260902,
+  "occupants": 3,
+  "base_flow_l_min": 0.015,
+  "event_probability_per_minute": 0.010,
+  "conservation_tolerance_m3": 1e-12
+}
+

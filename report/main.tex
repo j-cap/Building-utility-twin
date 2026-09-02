@@ -30,9 +30,12 @@ complexity are added.
 \section{System architecture}
 The intended data path is
 \begin{equation}
-  \text{scenario} \rightarrow \text{physical simulator}
-  \rightarrow \text{virtual meter} \rightarrow \text{canonical measurement}
+  \begin{aligned}
+  \text{scenario} &\rightarrow \text{physical simulator}
+  \rightarrow \text{virtual meter} \\
+  &\rightarrow \text{canonical measurement}
   \rightarrow \text{storage} \rightarrow \text{analysis/report}.
+  \end{aligned}
 \end{equation}
 Every boundary is explicit. The simulator produces physical truth, the meter
 models what an instrument reports, the measurement contract gives the report a
@@ -53,6 +56,25 @@ timestamp, numerical value, canonical unit, quality flag, and source. The
 contract validates quantity--unit compatibility and rejects non-finite values,
 naive timestamps, and empty identifiers. Its serialization is deterministic so
 that experiment outputs can be compared byte-for-byte.
+
+For interval-average flow, an additional duration field defines the integration
+interval. A cumulative register is an instantaneous boundary reading and has no
+duration. Table~\ref{tab:channels} gives the two Experiment~0 channels.
+\begin{table}[htbp]
+  \centering
+  \caption{Canonical channels used in Experiment~0.}
+  \label{tab:channels}
+  \begin{tabular}{llll}
+    \toprule
+    Channel & Asset & Quantity & Unit / time semantics \\
+    \midrule
+    \texttt{outlet\_flow} & \texttt{pipe-001} & volumetric flow rate
+      & $\mathrm{m^3\,s^{-1}}$, 60-s mean \\
+    \texttt{cumulative\_register} & \texttt{meter-001} & cumulative volume
+      & $\mathrm{m^3}$, boundary value \\
+    \bottomrule
+  \end{tabular}
+\end{table}
 
 \section{Iteration A: minimum vertical slice}
 Iteration A establishes an end-to-end implementation with one pipe and no
@@ -100,10 +122,94 @@ Experiment~0 is complete when all of the following hold:
         experiment runner rather than edited manually.
 \end{enumerate}
 
-\section{Implementation status and results}
-At this baseline revision, Experiment~0 is specified but not yet implemented.
-The implementation and measured findings are developed on a dedicated feature
-branch and will replace this status section.
+\section{Experiment 0 implementation}
+The implementation uses Python~3.11 or newer and separates the vertical slice
+into four responsibilities:
+\begin{enumerate}
+  \item \texttt{contracts.py} implements the validated Python contract,
+        deterministic identifiers, and deterministic JSON serialization;
+  \item \texttt{simulation.py} implements the seeded demand scenario, the
+        lossless pipe, and the virtual cumulative meter;
+  \item \texttt{storage.py} atomically replaces and reads a JSON Lines file of
+        canonical measurements; and
+  \item \texttt{experiment.py} orchestrates the run, checks the storage
+        round-trip and conservation, and writes the analysis artifacts.
+\end{enumerate}
+A language-neutral JSON Schema in \texttt{schemas/measurement.schema.json}
+mirrors the Python validation rules. This is the external interface contract
+for future device adapters.
+
+\subsection{Demand scenario and reproducibility}
+The configuration is a versioned JSON file. The fixed seed is 20260902, the
+simulation starts at 2026-01-15 00:00:00 UTC, and the step is 60 seconds. A
+smooth morning/evening profile modulates the event-arrival probability. Seeded
+draws determine event duration and flow rate, while a small non-negative base
+flow avoids embedding sensor behavior in the physical model. The resulting
+flow is piecewise constant over every interval.
+
+Reproducibility is tested by executing the complete runner twice in separate
+temporary directories and comparing the canonical measurement stream, analysis
+CSV, and JSON summary byte-for-byte. The committed summary additionally records
+SHA-256 hashes of both data files.
+
+\subsection{Automated verification}
+Eight unit and integration tests cover contract validation, deterministic
+identifiers, serialization round-trips, file-backed queries, one-day duration,
+meter increments, end-of-day conservation, and repeated-run reproducibility.
+All eight tests pass. The conservation threshold is
+$\varepsilon_V=10^{-12}\,\mathrm{m^3}$.
+
+\section{Experiment 0 results}
+The run contains 1440 one-minute flow intervals and 1441 cumulative-register
+boundaries. Persisting both channels produces 2881 canonical observations. The
+numerical results are summarized in Table~\ref{tab:results}.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Experiment~0 results for seed 20260902.}
+  \label{tab:results}
+  \begin{tabular}{lr}
+    \toprule
+    Metric & Result \\
+    \midrule
+    Total metered volume & $777.656\,\mathrm{L}$ \\
+    Peak flow & $12.642\,\mathrm{L\,min^{-1}}$ \\
+    Active one-minute intervals & 131 of 1440 \\
+    Pipe balance residual & $0\,\mathrm{m^3}$ \\
+    Meter balance residual & $1.055\times10^{-14}\,\mathrm{m^3}$ \\
+    Cumulative register monotonic & yes \\
+    Conservation test & pass \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Figure~\ref{fig:experiment0} is generated directly by the experiment runner.
+Demand appears as sparse draw events, with more activity during the morning,
+midday, and early evening windows encoded by the scenario. Every positive flow
+interval creates the corresponding increase in cumulative volume. Flat register
+segments coincide with the near-zero base demand.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.96\linewidth]{experiment_0_one_pipe_day.png}
+  \caption{One simulated day. Top: outlet flow, equal to inlet flow for the
+  lossless one-pipe model. Bottom: the virtual meter's cumulative volume.}
+  \label{fig:experiment0}
+\end{figure}
+
+The non-zero meter residual is approximately two orders of magnitude below the
+declared tolerance and is caused by floating-point summation order: the summary
+sums all interval volumes, whereas the meter updates its register sequentially.
+The exact zero pipe residual follows from using the same flow at the two pipe
+boundaries.
+
+The result validates the software and data path, not household-demand realism.
+In particular, $777.656\,\mathrm{L}$ for three synthetic occupants should not be
+interpreted as a calibrated daily-use estimate. Before demand behavior is used
+for business or engineering conclusions, event frequencies, fixture mixtures,
+occupancy, and seasonal effects must be calibrated against field data. This
+separation is useful: the contracts, storage, meter semantics, and conservation
+tests can now remain fixed while the scenario model is improved.
 
 \section{Planned extensions}
 The next vertical slice introduces a cold-water branch and a domestic-hot-water
