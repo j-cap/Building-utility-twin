@@ -55,7 +55,39 @@ class MeasurementContractTests(unittest.TestCase):
                 value=math.nan,
             )
 
+    def test_thermal_power_requires_duration_and_cumulative_energy_does_not(self) -> None:
+        timestamp = datetime(2026, 1, 15, tzinfo=timezone.utc)
+        with self.assertRaises(ValueError):
+            Measurement.create(
+                asset_id="boiler-001",
+                channel="useful_power",
+                quantity=Quantity.THERMAL_POWER,
+                timestamp=timestamp,
+                value=1000.0,
+                source="test",
+            )
+        energy = Measurement.create(
+            asset_id="heat-meter-001",
+            channel="energy_register",
+            quantity=Quantity.CUMULATIVE_ENERGY,
+            timestamp=timestamp,
+            value=3_600_000.0,
+            source="test",
+        )
+        self.assertEqual(energy.unit, "J")
+
+    def test_temperature_uses_kelvin(self) -> None:
+        temperature = Measurement.create(
+            asset_id="boiler-001",
+            channel="supply_temperature",
+            quantity=Quantity.TEMPERATURE,
+            timestamp=datetime(2026, 1, 15, tzinfo=timezone.utc),
+            value=333.15,
+            source="test",
+        )
+        self.assertEqual(temperature.unit, "K")
+        self.assertIsNone(temperature.duration_seconds)
+
 
 if __name__ == "__main__":
     unittest.main()
-

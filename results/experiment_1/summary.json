@@ -1,0 +1,155 @@
+{
+  "configuration": {
+    "asset_ids": {
+      "boiler": "central-boiler-001",
+      "boiler_energy_meter": "boiler-input-meter-001",
+      "cold_branch": "cold-water-branch-001",
+      "cold_meter": "cold-water-meter-001",
+      "heat_meter": "useful-heat-meter-001",
+      "hot_branch": "dhw-supply-001",
+      "hot_meter": "hot-water-meter-001",
+      "water_inlet": "building-water-inlet-001",
+      "water_meter": "water-main-meter-001"
+    },
+    "boiler_efficiency": 0.9,
+    "cold_supply_temperature_c": 10.0,
+    "conservation_tolerance_m3": 1e-12,
+    "duration_seconds": 86400,
+    "energy_tolerance_j": 1e-06,
+    "experiment_id": "iteration_b_experiment_1",
+    "fixtures": [
+      {
+        "daily_volume_share": 0.27,
+        "hot_fraction": 0.0,
+        "mean_event_volume_l": 6.0,
+        "name": "toilet",
+        "nominal_flow_l_min": 6.0,
+        "time_profile": "awake"
+      },
+      {
+        "daily_volume_share": 0.3,
+        "hot_fraction": 0.75,
+        "mean_event_volume_l": 45.0,
+        "name": "shower",
+        "nominal_flow_l_min": 8.0,
+        "time_profile": "morning_evening"
+      },
+      {
+        "daily_volume_share": 0.23,
+        "hot_fraction": 0.45,
+        "mean_event_volume_l": 3.0,
+        "name": "faucet",
+        "nominal_flow_l_min": 4.0,
+        "time_profile": "meals"
+      },
+      {
+        "daily_volume_share": 0.12,
+        "hot_fraction": 0.0,
+        "mean_event_volume_l": 45.0,
+        "name": "laundry",
+        "nominal_flow_l_min": 7.0,
+        "time_profile": "daytime"
+      },
+      {
+        "daily_volume_share": 0.04,
+        "hot_fraction": 0.0,
+        "mean_event_volume_l": 13.0,
+        "name": "dishwasher",
+        "nominal_flow_l_min": 5.0,
+        "time_profile": "evening"
+      },
+      {
+        "daily_volume_share": 0.04,
+        "hot_fraction": 0.4413461538461539,
+        "mean_event_volume_l": 5.0,
+        "name": "cleaning",
+        "nominal_flow_l_min": 4.0,
+        "time_profile": "daytime"
+      }
+    ],
+    "hot_supply_temperature_c": 60.0,
+    "occupants": 3,
+    "seed": 20260903,
+    "start_utc": "2026-01-15T00:00:00Z",
+    "step_seconds": 60,
+    "target_hot_l_per_person_day": 45.0,
+    "target_total_l_per_person_day": 130.0,
+    "water_density_kg_m3": 997.0,
+    "water_heat_capacity_j_kg_k": 4180.0
+  },
+  "conservation": {
+    "energy": {
+      "boiler_input_meter_residual_j": 1.4901161193847656e-08,
+      "efficiency_residual_j": -1.862645149230957e-08,
+      "passed": true,
+      "thermodynamic_residual_j": -3.725290298461914e-09,
+      "tolerance_j": 1e-06,
+      "useful_meter_residual_j": -3.725290298461914e-09
+    },
+    "passed": true,
+    "water": {
+      "cold_meter_residual_m3": 0.0,
+      "cumulative_split_residual_m3": -2.498001805406602e-16,
+      "hot_meter_residual_m3": -2.7755575615628914e-17,
+      "max_interval_split_residual_m3_s": 1.3552527156068805e-20,
+      "passed": true,
+      "tolerance_m3": 1e-12,
+      "total_meter_residual_m3": 2.220446049250313e-16
+    }
+  },
+  "experiment_id": "iteration_b_experiment_1",
+  "reproducibility": {
+    "events_sha256": "bb88b6a54aa8b4fb9e25ce33bbb3d462981711257a40cb2557230610687e49a0",
+    "measurements_sha256": "16b1257e93d6ba11c01bef1add8f84b8c7fbdc9c7d9a4f46fd174db4717ac158",
+    "seed": 20260903,
+    "timeseries_sha256": "a8ef6d8d2c870110bba7674d3f619c1c7342ae7e0057887171c289351678d9f3"
+  },
+  "results": {
+    "boiler_input_energy_kwh": 8.68220833333333,
+    "cold_volume_l": 255.0,
+    "event_count": 56,
+    "fixture_breakdown": {
+      "cleaning": {
+        "event_count": 3,
+        "hot_volume_l": 6.885,
+        "total_volume_l": 15.6
+      },
+      "dishwasher": {
+        "event_count": 1,
+        "hot_volume_l": 0.0,
+        "total_volume_l": 15.6
+      },
+      "faucet": {
+        "event_count": 30,
+        "hot_volume_l": 40.365,
+        "total_volume_l": 89.7
+      },
+      "laundry": {
+        "event_count": 1,
+        "hot_volume_l": 0.0,
+        "total_volume_l": 46.8
+      },
+      "shower": {
+        "event_count": 3,
+        "hot_volume_l": 87.75,
+        "total_volume_l": 117.00000000000001
+      },
+      "toilet": {
+        "event_count": 18,
+        "hot_volume_l": 0.0,
+        "total_volume_l": 105.30000000000004
+      }
+    },
+    "hot_volume_l": 135.00000000000003,
+    "hot_water_share": 0.3461538461538464,
+    "interval_count": 1440,
+    "modeled_boiler_loss_kwh": 0.8682208333333271,
+    "peak_boiler_input_power_kw": 21.896992189411154,
+    "peak_hot_flow_l_min": 5.674619927861107,
+    "peak_total_flow_l_min": 10.430118685951946,
+    "stored_measurement_count": 17285,
+    "total_volume_l": 389.9999999999998,
+    "useful_dhw_energy_kwh": 7.813987500000002
+  },
+  "schema_version": "1.0"
+}
