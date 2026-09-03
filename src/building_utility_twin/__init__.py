@@ -13,21 +13,37 @@ from .domestic_hot_water import (
 )
 from .meters import IdealCumulativeMeter
 from .simulation import ExperimentConfig, SimulationResult, simulate_one_pipe_day
+from .telemetry import (
+    Experiment2Config,
+    MeterObservation,
+    ReconciledReading,
+    TelemetryFaultConfig,
+    TelemetrySimulationResult,
+    reconcile_observations,
+    simulate_imperfect_telemetry,
+)
 
 __all__ = [
     "ExperimentConfig",
     "Experiment1Config",
+    "Experiment2Config",
     "CentralBoiler",
     "FixtureDemandResult",
     "FixtureEvent",
     "FixtureSpec",
     "IdealCumulativeMeter",
     "Measurement",
+    "MeterObservation",
     "Quality",
     "Quantity",
+    "ReconciledReading",
     "SimulationResult",
     "ThermalSimulationResult",
+    "TelemetryFaultConfig",
+    "TelemetrySimulationResult",
     "generate_fixture_demand",
+    "reconcile_observations",
+    "simulate_imperfect_telemetry",
     "simulate_domestic_hot_water",
     "simulate_one_pipe_day",
 ]

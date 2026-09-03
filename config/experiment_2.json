@@ -1,0 +1,19 @@
+{
+  "experiment_id": "iteration_c_experiment_2",
+  "physical_config": "experiment_1.json",
+  "maximum_reconstruction_error_l": 1.0,
+  "maximum_end_error_l": 0.5,
+  "telemetry": {
+    "readout_interval_seconds": 300,
+    "register_resolution_l": 0.1,
+    "increment_noise_std_fraction": 0.01,
+    "register_modulus_l": 100.0,
+    "packet_loss_probability": 0.12,
+    "max_packet_delay_seconds": 900,
+    "reset_offsets_seconds": [
+      46800
+    ],
+    "seed": 20260904,
+    "rollover_drop_threshold_fraction": 0.25
+  }
+}

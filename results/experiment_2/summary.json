@@ -1,0 +1,166 @@
+{
+  "acceptance": {
+    "checks": {
+      "all_fault_classes_exercised": true,
+      "canonical_round_trip": true,
+      "end_error_within_limit": true,
+      "maximum_error_within_limit": true,
+      "physical_conservation": true,
+      "reconciled_register_monotonic": true,
+      "resets_recovered": true,
+      "rollovers_recovered": true
+    },
+    "fault_classes_exercised": {
+      "finite_resolution": true,
+      "measurement_noise": true,
+      "out_of_order_arrival": true,
+      "packet_delay": true,
+      "packet_loss": true,
+      "register_reset": true,
+      "register_rollover": true,
+      "sparse_readout": true
+    },
+    "passed": true
+  },
+  "communications": {
+    "delayed_packet_count": 252,
+    "delivered_packet_count": 252,
+    "delivery_ratio": 0.8719723183391004,
+    "dropped_packet_count": 37,
+    "maximum_delay_seconds": 900,
+    "maximum_observation_gap_seconds": 900,
+    "out_of_order_packet_count": 52,
+    "scheduled_readout_count": 289
+  },
+  "configuration": {
+    "experiment_id": "iteration_c_experiment_2",
+    "maximum_end_error_l": 0.5,
+    "maximum_reconstruction_error_l": 1.0,
+    "physical_configuration": {
+      "asset_ids": {
+        "boiler": "central-boiler-001",
+        "boiler_energy_meter": "boiler-input-meter-001",
+        "cold_branch": "cold-water-branch-001",
+        "cold_meter": "cold-water-meter-001",
+        "heat_meter": "useful-heat-meter-001",
+        "hot_branch": "dhw-supply-001",
+        "hot_meter": "hot-water-meter-001",
+        "water_inlet": "building-water-inlet-001",
+        "water_meter": "water-main-meter-001"
+      },
+      "boiler_efficiency": 0.9,
+      "cold_supply_temperature_c": 10.0,
+      "conservation_tolerance_m3": 1e-12,
+      "duration_seconds": 86400,
+      "energy_tolerance_j": 1e-06,
+      "experiment_id": "iteration_b_experiment_1",
+      "fixtures": [
+        {
+          "daily_volume_share": 0.27,
+          "hot_fraction": 0.0,
+          "mean_event_volume_l": 6.0,
+          "name": "toilet",
+          "nominal_flow_l_min": 6.0,
+          "time_profile": "awake"
+        },
+        {
+          "daily_volume_share": 0.3,
+          "hot_fraction": 0.75,
+          "mean_event_volume_l": 45.0,
+          "name": "shower",
+          "nominal_flow_l_min": 8.0,
+          "time_profile": "morning_evening"
+        },
+        {
+          "daily_volume_share": 0.23,
+          "hot_fraction": 0.45,
+          "mean_event_volume_l": 3.0,
+          "name": "faucet",
+          "nominal_flow_l_min": 4.0,
+          "time_profile": "meals"
+        },
+        {
+          "daily_volume_share": 0.12,
+          "hot_fraction": 0.0,
+          "mean_event_volume_l": 45.0,
+          "name": "laundry",
+          "nominal_flow_l_min": 7.0,
+          "time_profile": "daytime"
+        },
+        {
+          "daily_volume_share": 0.04,
+          "hot_fraction": 0.0,
+          "mean_event_volume_l": 13.0,
+          "name": "dishwasher",
+          "nominal_flow_l_min": 5.0,
+          "time_profile": "evening"
+        },
+        {
+          "daily_volume_share": 0.04,
+          "hot_fraction": 0.4413461538461539,
+          "mean_event_volume_l": 5.0,
+          "name": "cleaning",
+          "nominal_flow_l_min": 4.0,
+          "time_profile": "daytime"
+        }
+      ],
+      "hot_supply_temperature_c": 60.0,
+      "occupants": 3,
+      "seed": 20260903,
+      "start_utc": "2026-01-15T00:00:00Z",
+      "step_seconds": 60,
+      "target_hot_l_per_person_day": 45.0,
+      "target_total_l_per_person_day": 130.0,
+      "water_density_kg_m3": 997.0,
+      "water_heat_capacity_j_kg_k": 4180.0
+    },
+    "telemetry": {
+      "increment_noise_std_fraction": 0.01,
+      "max_packet_delay_seconds": 900,
+      "packet_loss_probability": 0.12,
+      "readout_interval_seconds": 300,
+      "register_modulus_l": 100.0,
+      "register_resolution_l": 0.1,
+      "reset_offsets_seconds": [
+        46800
+      ],
+      "rollover_drop_threshold_fraction": 0.25,
+      "seed": 20260904
+    }
+  },
+  "experiment_id": "iteration_c_experiment_2",
+  "meter": {
+    "configured_reset_count": 1,
+    "increment_noise_std_fraction": 0.01,
+    "register_modulus_l": 100.0,
+    "resolution_l": 0.1,
+    "simulated_rollover_count": 3
+  },
+  "physical_reference": {
+    "conservation_residual_m3": 2.220446049250313e-16,
+    "conservation_tolerance_m3": 1e-12,
+    "total_volume_l": 389.9999999999998
+  },
+  "reconciliation": {
+    "detected_reset_count": 1,
+    "detected_rollover_count": 3,
+    "end_error_l": 1.6653345369377348e-13,
+    "maximum_absolute_error_l": 0.41576428560297085,
+    "monotonic": true,
+    "reconciled_end_volume_l": 389.99999999999994,
+    "reconciled_reading_count": 252,
+    "rmse_l": 0.12447361026707172,
+    "suspect_reading_count": 36
+  },
+  "reproducibility": {
+    "measurements_sha256": "20db7cac20e0d081ed88079659de29999b3b042e404a9a281f93fac0a60e7b79",
+    "physical_seed": 20260903,
+    "telemetry_seed": 20260904,
+    "telemetry_sha256": "0f84a7c5a32dfd3d1197ac1f8eb7266db9e719a63d772669c7a00d48eeee59ce",
+    "timeseries_sha256": "2cd6c435430b56f6c0c3163f366b4f19d91517547dbfbb4c855f61fc46de8194"
+  },
+  "results": {
+    "stored_measurement_count": 504
+  },
+  "schema_version": "1.0"
+}

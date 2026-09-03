@@ -1,4 +1,4 @@
-name: Verify Experiment 0
+name: Verify experiments
 
 on:
   push:
@@ -25,6 +25,10 @@ jobs:
         run: |
           python scripts/run_experiment_1.py --config config/experiment_1.json --output /tmp/experiment_1_a
           python scripts/run_experiment_1.py --config config/experiment_1.json --output /tmp/experiment_1_b
+      - name: Regenerate Experiment 2
+        run: |
+          python scripts/run_experiment_2.py --config config/experiment_2.json --output /tmp/experiment_2_a
+          python scripts/run_experiment_2.py --config config/experiment_2.json --output /tmp/experiment_2_b
       - name: Verify byte-for-byte reproducibility
         run: |
           cmp /tmp/experiment_0_a/measurements.jsonl /tmp/experiment_0_b/measurements.jsonl
@@ -34,3 +38,7 @@ jobs:
           cmp /tmp/experiment_1_a/timeseries.csv /tmp/experiment_1_b/timeseries.csv
           cmp /tmp/experiment_1_a/events.csv /tmp/experiment_1_b/events.csv
           cmp /tmp/experiment_1_a/summary.json /tmp/experiment_1_b/summary.json
+          cmp /tmp/experiment_2_a/measurements.jsonl /tmp/experiment_2_b/measurements.jsonl
+          cmp /tmp/experiment_2_a/timeseries.csv /tmp/experiment_2_b/timeseries.csv
+          cmp /tmp/experiment_2_a/telemetry.csv /tmp/experiment_2_b/telemetry.csv
+          cmp /tmp/experiment_2_a/summary.json /tmp/experiment_2_b/summary.json
