@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "building-utility-twin"
+version = "0.1.0"
+description = "Simulation-first building utility digital twin"
+requires-python = ">=3.11"
+dependencies = [
+    "matplotlib>=3.7",
+]
+
+[project.scripts]
+building-utility-experiment-0 = "building_utility_twin.experiment:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+

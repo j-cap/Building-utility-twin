@@ -1,0 +1,28 @@
+name: Verify Experiment 0
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test-and-reproduce:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install package
+        run: python -m pip install -e .
+      - name: Run tests
+        run: python -m unittest discover -s tests -v
+      - name: Regenerate Experiment 0
+        run: |
+          python scripts/run_experiment_0.py --config config/experiment_0.json --output /tmp/experiment_0_a
+          python scripts/run_experiment_0.py --config config/experiment_0.json --output /tmp/experiment_0_b
+      - name: Verify byte-for-byte reproducibility
+        run: |
+          cmp /tmp/experiment_0_a/measurements.jsonl /tmp/experiment_0_b/measurements.jsonl
+          cmp /tmp/experiment_0_a/timeseries.csv /tmp/experiment_0_b/timeseries.csv
+          cmp /tmp/experiment_0_a/summary.json /tmp/experiment_0_b/summary.json

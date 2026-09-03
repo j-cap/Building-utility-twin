@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/building-utility-twin/measurement.schema.json",
+  "title": "Building Utility Twin canonical measurement",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "measurement_id",
+    "asset_id",
+    "channel",
+    "quantity",
+    "timestamp",
+    "value",
+    "unit",
+    "quality",
+    "source",
+    "duration_seconds"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "measurement_id": { "type": "string", "format": "uuid" },
+    "asset_id": { "type": "string", "minLength": 1 },
+    "channel": { "type": "string", "minLength": 1 },
+    "quantity": {
+      "enum": ["volumetric_flow_rate", "cumulative_volume"]
+    },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "value": { "type": "number" },
+    "unit": { "enum": ["m3/s", "m3"] },
+    "quality": { "enum": ["good", "suspect", "bad"] },
+    "source": { "type": "string", "minLength": 1 },
+    "duration_seconds": {
+      "oneOf": [
+        { "type": "integer", "minimum": 1 },
+        { "type": "null" }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "quantity": { "const": "volumetric_flow_rate" } },
+        "required": ["quantity"]
+      },
+      "then": {
+        "properties": {
+          "unit": { "const": "m3/s" },
+          "duration_seconds": { "type": "integer", "minimum": 1 }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "quantity": { "const": "cumulative_volume" } },
+        "required": ["quantity"]
+      },
+      "then": {
+        "properties": {
+          "unit": { "const": "m3" },
+          "value": { "minimum": 0 },
+          "duration_seconds": { "type": "null" }
+        }
+      }
+    }
+  ]
+}
+

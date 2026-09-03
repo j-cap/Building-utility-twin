@@ -1,0 +1,4 @@
+# The runner regenerates these deterministic, relatively large data files.
+measurements.jsonl
+timeseries.csv
+
