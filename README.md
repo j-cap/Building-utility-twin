@@ -5,7 +5,7 @@ starts with a deliberately small vertical slice and preserves the same
 interfaces when simulated devices are replaced by real meters.
 
 The technical design, experiment sequence, and findings are documented in
-[`report/main.tex`](report/main.tex). Iterations A and B are implemented as
+[`report/main.tex`](report/main.tex). Iterations A, B, and C are implemented as
 reproducible, end-to-end vertical slices.
 
 ## Experiment 0
@@ -27,6 +27,9 @@ PYTHONPATH=src python scripts/run_experiment_0.py \
 PYTHONPATH=src python scripts/run_experiment_1.py \
   --config config/experiment_1.json \
   --output results/experiment_1
+PYTHONPATH=src python scripts/run_experiment_2.py \
+  --config config/experiment_2.json \
+  --output results/experiment_2
 cd report && pdflatex -interaction=nonstopmode -halt-on-error main.tex
 ```
 
@@ -54,6 +57,21 @@ faucet, laundry, dishwasher, and cleaning draw auditable. Water and energy
 balances are verified independently. As in Experiment 0, the compact summary
 and figure are versioned while the deterministic raw streams are regenerated.
 
+## Experiment 2
+
+Experiment 2 preserves Experiment 1's physical reference day and inserts an
+imperfect device-and-communications layer between the total-water meter and
+storage. The reference scenario applies 0.1 L register resolution, noisy
+positive increments, five-minute readout, stochastic packet loss, delays of up
+to 15 minutes, a 100 L rollover modulus, and one declared reset.
+
+The reconciler sorts packets by observation time, bridges missing samples,
+unwraps rollovers, and uses the reset event's pre-reset register to retain the
+consumption history. Raw and reconciled values remain canonical cumulative
+volume measurements. The runner additionally writes `telemetry.csv`, which
+audits every scheduled readout, loss, reception time, delay, device event,
+quality flag, and correction.
+
 ## Repository structure
 
 ```text
@@ -73,6 +91,8 @@ report/       LaTeX design and findings report
    storage.
 2. **Iteration B / Experiment 1 (complete):** fixture-level cold/hot-water demand,
    central-boiler energy accounting, and water/energy conservation.
-3. Add imperfect sensing, delayed or missing readings, and register anomalies.
+3. **Iteration C / Experiment 2 (complete):** imperfect sensing, delayed or
+   missing readings, rollover/reset handling, and auditable reconciliation.
 4. Add apartments, building-level aggregation, and shared boiler accounting.
-5. Replace simulated adapters with field-device and building-system adapters.
+5. Add reconciliation analytics for plausibility, leaks, and anomalies.
+6. Replace simulated adapters with field-device and building-system adapters.

@@ -2,7 +2,7 @@
 \usepackage[margin=25mm]{geometry}
 \usepackage{amsmath,amssymb,booktabs,graphicx,hyperref}
 \usepackage{xcolor}
-\graphicspath{{../results/experiment_0/}{../results/experiment_1/}}
+\graphicspath{{../results/experiment_0/}{../results/experiment_1/}{../results/experiment_2/}}
 \hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue}
 
 \title{Building Utility Twin\\\large Simulation Framework and Experiment Plan}
@@ -27,6 +27,8 @@ Iteration A intentionally starts with a single water pipe. This small vertical
 slice is used to validate the architecture before physical and operational
 complexity are added. Iteration B then introduces the first physically meaningful
 coupling: domestic hot-water consumption supplied by a central boiler.
+Iteration C keeps that physical reference fixed and tests the meter and
+communications boundary under realistic data-path imperfections.
 
 \section{System architecture}
 The intended data path is
@@ -34,7 +36,8 @@ The intended data path is
   \begin{aligned}
   \text{scenario} &\rightarrow \text{physical simulator}
   \rightarrow \text{virtual meter} \\
-  &\rightarrow \text{canonical measurement}
+  &\rightarrow \text{telemetry transport}
+  \rightarrow \text{canonical measurement}
   \rightarrow \text{storage} \rightarrow \text{analysis/report}.
   \end{aligned}
 \end{equation}
@@ -42,6 +45,11 @@ Every boundary is explicit. The simulator produces physical truth, the meter
 models what an instrument reports, the measurement contract gives the report a
 stable meaning, and storage persists the contract without domain-specific
 reinterpretation.
+
+The canonical timestamp remains the time at which the device observed the
+quantity. Transport metadata records reception time separately. This
+distinction allows delayed and out-of-order packets to be reordered without
+rewriting the physical time semantics of the measurement.
 
 \subsection{Canonical units and sign convention}
 Internal calculations use SI units. Volumetric flow rate $q_k$ is in
@@ -355,15 +363,145 @@ instantaneously. It cannot yet represent storage-tank temperature, reheating,
 recirculation, standby losses, capacity saturation, or the distinction between
 useful tenant energy and plant input over delayed time scales.
 
+\section{Iteration C: imperfect meter and telemetry}
+Experiment~2 preserves the exact Experiment~1 physical reference and perturbs
+only the total-water meter and its communication path. This separation provides
+a known cumulative-volume truth against which ingestion and register recovery
+can be tested. It also exercises the same canonical contract and file store that
+a later field-device adapter will use.
+
+\subsection{Meter and communication fault model}
+For a positive true interval increment $\Delta V_k$, the device integrates
+\begin{equation}
+  \Delta \widetilde V_k =
+  \max\left(0,\Delta V_k(1+\epsilon_k)\right),\qquad
+  \epsilon_k\sim\mathcal{N}(0,\sigma^2),
+\end{equation}
+with $\sigma=0.01$. Zero-flow intervals remain zero, avoiding a non-physical
+positive noise drift while still perturbing every consumed increment. The
+cumulative device state is quantized to $0.1\,\mathrm{L}$ and exposed through a
+finite register with modulus $M=100\,\mathrm{L}$. The deliberately small
+modulus is a test device setting chosen to force several rollovers within one
+day; it is not intended to represent a commercial meter's register capacity.
+
+The register is sampled every five minutes. Each non-critical readout is
+dropped independently with probability $0.12$; delivered packets receive an
+integer delay sampled uniformly from zero to 900 seconds. The first, final, and
+reset-event packets are forced to arrive so that the designed case has an
+observable start, end, and declared reset. A reset occurs at 13:00 UTC. Its
+transport envelope carries a reset flag and the pre-reset register, matching the
+assumption that the device protocol exposes reset metadata. Observation and
+reception timestamps are both retained in an auditable telemetry ledger.
+
+\subsection{Register reconciliation}
+Packets are first sorted by observation time, independently of arrival order.
+For successive raw values $R_{j-1}$ and $R_j$, a decrease larger than
+$\gamma M$, with $\gamma=0.25$, is interpreted as a rollover:
+\begin{equation}
+  \Delta \widehat V_j =
+  \begin{cases}
+    R_j-R_{j-1}+M, & R_j-R_{j-1}< -\gamma M,\\
+    R_j-R_{j-1}, & \text{otherwise}.
+  \end{cases}
+  \qquad
+  \widehat V_j=\widehat V_{j-1}+\Delta\widehat V_j.
+\end{equation}
+At a declared reset, the same unwrapping rule is applied from the preceding
+received value to the transmitted pre-reset value; the post-reset value is then
+added. Consequently, missing intermediate readouts and a reset do not erase
+consumption already accumulated by the physical device.
+
+Both the raw finite register and the reconciled cumulative value are persisted
+as canonical cumulative-volume measurements. A reconciled observation is
+marked \texttt{suspect} when it follows a missing readout or requires a
+rollover/reset correction. The quality flag describes the processing path; it
+does not mean that the recovered numerical value failed its acceptance limit.
+
+\subsection{Acceptance criteria and verification}
+Experiment~2 is accepted when (i) the unchanged physical model still conserves
+water, (ii) every configured imperfection is exercised, (iii) all simulated
+rollovers and declared resets are recovered, (iv) the reconciled register is
+monotonic, (v) its maximum error is at most $1.0\,\mathrm{L}$ and its final
+error at most $0.5\,\mathrm{L}$, (vi) raw and reconciled records survive the
+canonical file round-trip, and (vii) a repeated seeded run is byte-identical.
+
+The combined suite contains 21 passing tests. In addition to the previous
+physical, contract, and storage checks, it includes a hand-worked rollover/reset
+sequence, rejection of an unaccompanied declared reset, full fault-scenario
+recovery, and complete repeated-run comparison. CI regenerates all three
+experiments twice and compares their machine-readable outputs byte-for-byte.
+
+\section{Experiment 2 results}
+The reference scenario schedules 289 boundary readouts. Table~
+\ref{tab:experiment2-results} summarizes the sensing, communication, and
+reconciliation results.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Experiment~2 results for telemetry seed 20260904.}
+  \label{tab:experiment2-results}
+  \begin{tabular}{lr}
+    \toprule
+    Metric & Result \\
+    \midrule
+    Scheduled / delivered / dropped packets & 289 / 252 / 37 \\
+    Delivery ratio & 87.20\% \\
+    Out-of-order arrivals & 52 \\
+    Maximum delay / observation gap & 900 / 900 s \\
+    Simulated and recovered rollovers & 3 / 3 \\
+    Configured and recovered resets & 1 / 1 \\
+    Reconciled readings marked suspect & 36 of 252 \\
+    Maximum absolute reconstruction error & 0.416 L \\
+    Reconstruction RMSE & 0.124 L \\
+    End-of-day reconstruction error & $<10^{-12}$ L \\
+    Canonical raw + reconciled records & 504 \\
+    All acceptance checks & pass \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Figure~\ref{fig:experiment2} makes the separation between device state and
+recovered accounting explicit. The raw register repeatedly returns toward zero
+at rollover and at the declared reset, while the reconciled series remains
+monotonic and tracks the physical reference. Packet losses create gaps in the
+five-minute observations, and variable delays produce the 52 out-of-order
+arrivals. Reordering by observation time prevents those arrival inversions from
+creating false backward consumption.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.86\linewidth]{experiment_2_telemetry_recovery.png}
+  \caption{Experiment~2. Top: physical cumulative volume and the finite raw
+  register; the dashed line marks the declared reset. Middle: reconciled
+  cumulative volume and reconstruction error. Bottom: packet delay by
+  observation time, with dropped packets marked by crosses.}
+  \label{fig:experiment2}
+\end{figure}
+
+The maximum error of $0.416\,\mathrm{L}$ and RMSE of $0.124\,\mathrm{L}$ are
+small relative to the $390\,\mathrm{L}$ daily total and satisfy the declared
+limits. The nearly zero final error is a seed-specific cancellation after
+increment noise and register quantization; it is not evidence that the meter is
+unbiased. Likewise, one designed day cannot establish a statistical packet-loss
+or reconstruction guarantee. A later sensitivity campaign should vary seeds,
+loss bursts, readout intervals, noise levels, and modulus.
+
+The reset result also depends on explicit protocol metadata. A silent reset is
+not distinguishable in general from rollover or replacement using a single raw
+register alone. Production ingestion should therefore retain device event
+codes, meter identity and installation history, and reception timestamps
+alongside the canonical observation. Experiment~2 validates that this metadata
+can be kept outside the device-independent measurement payload without changing
+its quantity, unit, or observation-time semantics.
+
 \section{Planned extensions}
-Experiment~2 will introduce meter and communication imperfections: finite
-resolution, measurement noise, sparse readout, missing or delayed packets,
-register rollover, and reset handling. Experiment~3 will add apartments,
-building-level aggregation, and a shared boiler with storage and loss dynamics.
+Experiment~3 will add apartments, building-level aggregation, and a shared
+boiler with storage and loss dynamics.
 Experiment~4 will add reconciliation, plausibility, leak, and anomaly analytics.
 Experiment~5 will replace a simulated source with a real file or API adapter
 while preserving the canonical contract, storage, and analysis layers.
 
+\clearpage
 \begingroup
 \raggedright
 \bibliographystyle{plain}
