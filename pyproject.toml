@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "building-utility-twin"
-version = "0.1.0"
+version = "0.2.0"
 description = "Simulation-first building utility digital twin"
 requires-python = ">=3.11"
 dependencies = [
@@ -13,7 +13,7 @@ dependencies = [
 
 [project.scripts]
 building-utility-experiment-0 = "building_utility_twin.experiment:main"
+building-utility-experiment-1 = "building_utility_twin.experiment_1:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-

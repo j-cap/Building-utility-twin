@@ -1,0 +1,79 @@
+{
+  "experiment_id": "iteration_b_experiment_1",
+  "start_utc": "2026-01-15T00:00:00Z",
+  "duration_seconds": 86400,
+  "step_seconds": 60,
+  "seed": 20260903,
+  "occupants": 3,
+  "target_total_l_per_person_day": 130.0,
+  "target_hot_l_per_person_day": 45.0,
+  "cold_supply_temperature_c": 10.0,
+  "hot_supply_temperature_c": 60.0,
+  "water_density_kg_m3": 997.0,
+  "water_heat_capacity_j_kg_k": 4180.0,
+  "boiler_efficiency": 0.90,
+  "conservation_tolerance_m3": 1e-12,
+  "energy_tolerance_j": 1e-6,
+  "asset_ids": {
+    "water_inlet": "building-water-inlet-001",
+    "cold_branch": "cold-water-branch-001",
+    "hot_branch": "dhw-supply-001",
+    "boiler": "central-boiler-001",
+    "water_meter": "water-main-meter-001",
+    "cold_meter": "cold-water-meter-001",
+    "hot_meter": "hot-water-meter-001",
+    "heat_meter": "useful-heat-meter-001",
+    "boiler_energy_meter": "boiler-input-meter-001"
+  },
+  "fixtures": [
+    {
+      "name": "toilet",
+      "daily_volume_share": 0.27,
+      "hot_fraction": 0.0,
+      "mean_event_volume_l": 6.0,
+      "nominal_flow_l_min": 6.0,
+      "time_profile": "awake"
+    },
+    {
+      "name": "shower",
+      "daily_volume_share": 0.30,
+      "hot_fraction": 0.75,
+      "mean_event_volume_l": 45.0,
+      "nominal_flow_l_min": 8.0,
+      "time_profile": "morning_evening"
+    },
+    {
+      "name": "faucet",
+      "daily_volume_share": 0.23,
+      "hot_fraction": 0.45,
+      "mean_event_volume_l": 3.0,
+      "nominal_flow_l_min": 4.0,
+      "time_profile": "meals"
+    },
+    {
+      "name": "laundry",
+      "daily_volume_share": 0.12,
+      "hot_fraction": 0.0,
+      "mean_event_volume_l": 45.0,
+      "nominal_flow_l_min": 7.0,
+      "time_profile": "daytime"
+    },
+    {
+      "name": "dishwasher",
+      "daily_volume_share": 0.04,
+      "hot_fraction": 0.0,
+      "mean_event_volume_l": 13.0,
+      "nominal_flow_l_min": 5.0,
+      "time_profile": "evening"
+    },
+    {
+      "name": "cleaning",
+      "daily_volume_share": 0.04,
+      "hot_fraction": 0.4413461538461539,
+      "mean_event_volume_l": 5.0,
+      "nominal_flow_l_min": 4.0,
+      "time_profile": "daytime"
+    }
+  ]
+}
+

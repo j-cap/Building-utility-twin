@@ -23,11 +23,17 @@
     "asset_id": { "type": "string", "minLength": 1 },
     "channel": { "type": "string", "minLength": 1 },
     "quantity": {
-      "enum": ["volumetric_flow_rate", "cumulative_volume"]
+      "enum": [
+        "volumetric_flow_rate",
+        "cumulative_volume",
+        "temperature",
+        "thermal_power",
+        "cumulative_energy"
+      ]
     },
     "timestamp": { "type": "string", "format": "date-time" },
     "value": { "type": "number" },
-    "unit": { "enum": ["m3/s", "m3"] },
+    "unit": { "enum": ["m3/s", "m3", "K", "W", "J"] },
     "quality": { "enum": ["good", "suspect", "bad"] },
     "source": { "type": "string", "minLength": 1 },
     "duration_seconds": {
@@ -52,6 +58,18 @@
     },
     {
       "if": {
+        "properties": { "quantity": { "const": "thermal_power" } },
+        "required": ["quantity"]
+      },
+      "then": {
+        "properties": {
+          "unit": { "const": "W" },
+          "duration_seconds": { "type": "integer", "minimum": 1 }
+        }
+      }
+    },
+    {
+      "if": {
         "properties": { "quantity": { "const": "cumulative_volume" } },
         "required": ["quantity"]
       },
@@ -62,7 +80,31 @@
           "duration_seconds": { "type": "null" }
         }
       }
+    },
+    {
+      "if": {
+        "properties": { "quantity": { "const": "temperature" } },
+        "required": ["quantity"]
+      },
+      "then": {
+        "properties": {
+          "unit": { "const": "K" },
+          "duration_seconds": { "type": "null" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "quantity": { "const": "cumulative_energy" } },
+        "required": ["quantity"]
+      },
+      "then": {
+        "properties": {
+          "unit": { "const": "J" },
+          "value": { "minimum": 0 },
+          "duration_seconds": { "type": "null" }
+        }
+      }
     }
   ]
 }
-

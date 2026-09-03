@@ -2,7 +2,7 @@
 \usepackage[margin=25mm]{geometry}
 \usepackage{amsmath,amssymb,booktabs,graphicx,hyperref}
 \usepackage{xcolor}
-\graphicspath{{../results/experiment_0/}}
+\graphicspath{{../results/experiment_0/}{../results/experiment_1/}}
 \hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue}
 
 \title{Building Utility Twin\\\large Simulation Framework and Experiment Plan}
@@ -25,7 +25,8 @@ The long-term system covers cold water, domestic hot water, the central boiler,
 thermal energy, apartments, meter imperfections, and operational anomalies.
 Iteration A intentionally starts with a single water pipe. This small vertical
 slice is used to validate the architecture before physical and operational
-complexity are added.
+complexity are added. Iteration B then introduces the first physically meaningful
+coupling: domestic hot-water consumption supplied by a central boiler.
 
 \section{System architecture}
 The intended data path is
@@ -211,17 +212,162 @@ occupancy, and seasonal effects must be calibrated against field data. This
 separation is useful: the contracts, storage, meter semantics, and conservation
 tests can now remain fixed while the scenario model is improved.
 
-\section{Planned extensions}
-The next vertical slice introduces a cold-water branch and a domestic-hot-water
-branch. With water density $\rho$, specific heat capacity $c_p$, hot-water flow
-$q_{\mathrm{hw}}$, cold supply temperature $T_{\mathrm{cold}}$, and boiler
-supply temperature $T_{\mathrm{hot}}$, useful heat becomes
+\section{Iteration B: domestic hot water and central boiler}
+Experiment~1 replaces the abstract demand signal with fixture-level events and
+introduces cold- and hot-water branches. The goal is not yet a dynamic boiler
+model. It is to establish the canonical water--heat interface and verify the
+corresponding conservation laws end to end.
+
+\subsection{Reference-day calibration}
+An Austrian guidance document reports approximately
+$130\,\mathrm{L\,person^{-1}\,day^{-1}}$ total water use, including about
+$55\,\mathrm{L}$ of warm water \cite{umweltberatung2016warmwasser}. More recent
+klimaaktiv guidance uses approximately $45\,\mathrm{L}$ of warm water per person
+and day \cite{klimaaktiv2026dhw}. Experiment~1 therefore defines a transparent
+three-person reference day with $130\,\mathrm{L}$ total and $45\,\mathrm{L}$ hot
+water per person: $390\,\mathrm{L}$ total, split into $255\,\mathrm{L}$ cold and
+$135\,\mathrm{L}$ hot water.
+
+The fixture allocation in Table~\ref{tab:fixtures} is a modelling assumption,
+not a measured Austrian end-use distribution. For each fixture, seeded
+log-normal weights distribute its fixed daily allocation across events. Seeded
+time-profile sampling places events during plausible usage windows. Normalizing
+event volumes within each fixture makes the aggregate reference targets exact
+while leaving event timing and individual event size stochastic and
+reproducible.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Fixture assumptions and realized event counts for Experiment~1.}
+  \label{tab:fixtures}
+  \begin{tabular}{lrrrr}
+    \toprule
+    Fixture & Volume share & Hot fraction & Events & Volume [L] \\
+    \midrule
+    Toilet & 27\% & 0\% & 18 & 105.3 \\
+    Shower & 30\% & 75\% & 3 & 117.0 \\
+    Faucet & 23\% & 45\% & 30 & 89.7 \\
+    Laundry & 12\% & 0\% & 1 & 46.8 \\
+    Dishwasher & 4\% & 0\% & 1 & 15.6 \\
+    Cleaning & 4\% & 44.1\% & 3 & 15.6 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Water and energy model}
+At every interval the building inlet flow is split without loss:
 \begin{equation}
-  \dot Q_{\mathrm{hw}} = \rho c_p q_{\mathrm{hw}}
+  q_{\mathrm{tot},k}=q_{\mathrm{cold},k}+q_{\mathrm{hot},k}.
+\end{equation}
+With water density $\rho$, specific heat capacity $c_p$, hot-water flow
+$q_{\mathrm{hot},k}$, cold supply temperature $T_{\mathrm{cold}}$, and boiler
+supply temperature $T_{\mathrm{hot}}$, useful thermal power is
+\begin{equation}
+  \dot Q_{\mathrm{use},k} = \rho c_p q_{\mathrm{hot},k}
   \left(T_{\mathrm{hot}}-T_{\mathrm{cold}}\right).
 \end{equation}
-Later iterations add boiler efficiency, circulation and storage losses,
-multi-apartment aggregation, noisy or delayed meters, missing data, leaks, and
-adapters for real devices and external systems.
+The ideal boiler has constant efficiency $\eta$, so its input power is
+\begin{equation}
+  \dot Q_{\mathrm{in},k}=\frac{\dot Q_{\mathrm{use},k}}{\eta}.
+\end{equation}
+Experiment~1 uses $T_{\mathrm{cold}}=10\,^{\circ}\mathrm{C}$,
+$T_{\mathrm{hot}}=60\,^{\circ}\mathrm{C}$, $\rho=997\,\mathrm{kg\,m^{-3}}$,
+$c_p=4180\,\mathrm{J\,kg^{-1}\,K^{-1}}$, and $\eta=0.90$. These are explicit
+scenario assumptions. The boiler has no storage dynamics, circulation loss,
+standby loss, capacity limit, or control transient.
+
+Ideal cumulative meters integrate total, cold, and hot volume as well as useful
+and input energy. The canonical contract is extended with temperature in kelvin,
+interval-average thermal power in watts, and cumulative energy in joules. The
+same JSON Lines storage layer used in Experiment~0 persists all channels.
+
+\subsection{Acceptance criteria and verification}
+Experiment~1 is accepted when (i) the configured daily total and hot-water
+targets are reproduced, (ii) the water split holds in every interval and for all
+cumulative meters, (iii) integrated hot-water energy agrees with the
+thermodynamic equation, (iv) useful and input energy agree with the boiler
+efficiency, (v) all canonical records survive a file round-trip, and (vi) a
+same-seed rerun produces byte-identical measurements, time series, event ledger,
+and summary.
+
+The combined suite now contains 17 passing tests. It includes zero-hot-flow,
+pointwise water-balance, daily target, thermodynamic energy, efficiency,
+contract, meter-integration, storage, and complete repeated-run tests. CI runs
+both Experiments~0 and 1 twice and compares their generated data byte-for-byte.
+
+\section{Experiment 1 results}
+The seeded reference day contains 56 fixture events and produces 17,285
+canonical observations. Table~\ref{tab:experiment1-results} summarizes the main
+results.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Experiment~1 results for seed 20260903.}
+  \label{tab:experiment1-results}
+  \begin{tabular}{lr}
+    \toprule
+    Metric & Result \\
+    \midrule
+    Total / cold / hot volume & 390.000 / 255.000 / 135.000 L \\
+    Hot-water share & 34.615\% \\
+    Peak total / hot flow & 10.430 / 5.675 $\mathrm{L\,min^{-1}}$ \\
+    Peak boiler input power & 21.897 kW \\
+    Useful DHW energy & 7.814 kWh \\
+    Boiler input energy & 8.682 kWh \\
+    Modelled conversion loss & 0.868 kWh \\
+    Maximum water-volume residual & $2.50\times10^{-16}\,\mathrm{m^3}$ \\
+    Maximum energy residual & $1.86\times10^{-8}\,\mathrm{J}$ \\
+    Water and energy conservation & pass \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Figure~\ref{fig:experiment1} shows the complete coupled result. Cold-only
+fixtures create no thermal demand. Hot-water portions of shower, faucet, and
+cleaning events generate simultaneous boiler-power pulses. The cumulative
+volume curves close at their configured targets, while cumulative input energy
+ends at $8.682\,\mathrm{kWh}$.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.86\linewidth]{experiment_1_hot_water_boiler.png}
+  \caption{Experiment~1. Top: total, cold, and hot fixture demand. Middle:
+  corresponding cumulative volumes. Bottom: useful and boiler-input thermal
+  power with cumulative boiler-input energy.}
+  \label{fig:experiment1}
+\end{figure}
+
+The useful energy of $7.814\,\mathrm{kWh}$ corresponds to approximately
+$2.605\,\mathrm{kWh}$ per person for this day. Annualizing only this deliberately
+stationary reference calculation gives approximately $951\,\mathrm{kWh}$ useful
+energy per person, close to the order-of-magnitude value of
+$1000\,\mathrm{kWh}$ reported with the Austrian warm-water guidance
+\cite{umweltberatung2016warmwasser}. This is a consistency check rather than an
+independent validation because both calculations use comparable daily-volume
+assumptions.
+
+The strongest remaining limitation is now explicit: aggregate daily quantities
+are calibrated, but fixture shares, within-day timing, and event-size
+distributions are assumed. The exact daily totals are useful for isolating and
+testing the water--energy interface, but they suppress day-to-day consumption
+variability. Moreover, the current boiler transforms hot-water flow into power
+instantaneously. It cannot yet represent storage-tank temperature, reheating,
+recirculation, standby losses, capacity saturation, or the distinction between
+useful tenant energy and plant input over delayed time scales.
+
+\section{Planned extensions}
+Experiment~2 will introduce meter and communication imperfections: finite
+resolution, measurement noise, sparse readout, missing or delayed packets,
+register rollover, and reset handling. Experiment~3 will add apartments,
+building-level aggregation, and a shared boiler with storage and loss dynamics.
+Experiment~4 will add reconciliation, plausibility, leak, and anomaly analytics.
+Experiment~5 will replace a simulated source with a real file or API adapter
+while preserving the canonical contract, storage, and analysis layers.
+
+\begingroup
+\raggedright
+\bibliographystyle{plain}
+\bibliography{references}
+\endgroup
 
 \end{document}

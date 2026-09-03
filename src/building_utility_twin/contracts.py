@@ -20,10 +20,13 @@ MEASUREMENT_NAMESPACE = UUID("ef35bc8a-b27c-4c13-9e19-417e1ef2bc86")
 
 
 class Quantity(str, Enum):
-    """Physical quantities supported by Iteration A."""
+    """Physical quantities supported by the utility-twin boundary."""
 
     VOLUMETRIC_FLOW_RATE = "volumetric_flow_rate"
     CUMULATIVE_VOLUME = "cumulative_volume"
+    TEMPERATURE = "temperature"
+    THERMAL_POWER = "thermal_power"
+    CUMULATIVE_ENERGY = "cumulative_energy"
 
 
 class Quality(str, Enum):
@@ -37,6 +40,19 @@ class Quality(str, Enum):
 CANONICAL_UNITS = {
     Quantity.VOLUMETRIC_FLOW_RATE: "m3/s",
     Quantity.CUMULATIVE_VOLUME: "m3",
+    Quantity.TEMPERATURE: "K",
+    Quantity.THERMAL_POWER: "W",
+    Quantity.CUMULATIVE_ENERGY: "J",
+}
+
+INTERVAL_QUANTITIES = {
+    Quantity.VOLUMETRIC_FLOW_RATE,
+    Quantity.THERMAL_POWER,
+}
+
+NON_NEGATIVE_REGISTER_QUANTITIES = {
+    Quantity.CUMULATIVE_VOLUME,
+    Quantity.CUMULATIVE_ENERGY,
 }
 
 
@@ -54,9 +70,9 @@ def _isoformat_utc(value: datetime) -> str:
 class Measurement:
     """A validated canonical observation.
 
-    ``duration_seconds`` is required for interval-average flow measurements and
-    absent for instantaneous cumulative-register readings. This makes the time
-    semantics explicit enough to reproduce volume integration.
+    ``duration_seconds`` is required for interval-average rate measurements and
+    absent for instantaneous temperature and cumulative-register readings. This
+    makes the time semantics explicit enough to reproduce integration.
     """
 
     measurement_id: str
@@ -86,13 +102,18 @@ class Measurement:
             raise ValueError(
                 f"{self.quantity.value} requires canonical unit {expected_unit!r}"
             )
-        if self.quantity is Quantity.VOLUMETRIC_FLOW_RATE:
+        if self.quantity in INTERVAL_QUANTITIES:
             if self.duration_seconds is None or self.duration_seconds <= 0:
-                raise ValueError("flow measurements require a positive duration_seconds")
+                raise ValueError(
+                    "rate measurements require a positive duration_seconds"
+                )
         elif self.duration_seconds is not None:
-            raise ValueError("cumulative readings must not define duration_seconds")
-        if self.quantity is Quantity.CUMULATIVE_VOLUME and self.value < 0.0:
-            raise ValueError("cumulative volume must be non-negative")
+            raise ValueError(
+                "instantaneous and cumulative readings must not define "
+                "duration_seconds"
+            )
+        if self.quantity in NON_NEGATIVE_REGISTER_QUANTITIES and self.value < 0.0:
+            raise ValueError("cumulative register values must be non-negative")
 
     @classmethod
     def create(
@@ -180,4 +201,3 @@ class Measurement:
     @classmethod
     def from_json(cls, payload: str) -> "Measurement":
         return cls.from_dict(json.loads(payload))
-
