@@ -5,7 +5,7 @@ starts with a deliberately small vertical slice and preserves the same
 interfaces when simulated devices are replaced by real meters.
 
 The technical design, experiment sequence, and findings are documented in
-[`report/main.tex`](report/main.tex). Iterations A, B, and C are implemented as
+[`report/main.tex`](report/main.tex). Iterations A through D are implemented as
 reproducible, end-to-end vertical slices.
 
 ## Experiment 0
@@ -30,6 +30,9 @@ PYTHONPATH=src python scripts/run_experiment_1.py \
 PYTHONPATH=src python scripts/run_experiment_2.py \
   --config config/experiment_2.json \
   --output results/experiment_2
+PYTHONPATH=src python scripts/run_experiment_3.py \
+  --config config/experiment_3.json \
+  --output results/experiment_3
 cd report && pdflatex -interaction=nonstopmode -halt-on-error main.tex
 ```
 
@@ -72,6 +75,20 @@ volume measurements. The runner additionally writes `telemetry.csv`, which
 audits every scheduled readout, loss, reception time, delay, device event,
 quality flag, and correction.
 
+## Experiment 3
+
+Experiment 3 composes four independently seeded apartments with different
+occupancy and demand scales. Apartment total, cold, and hot branches aggregate
+into exact building-level flows and cumulative registers. The combined hot
+branch is supplied by a 300 L well-mixed storage tank with thermostat
+hysteresis, a 30 kW boiler limit, fixed conversion efficiency, and
+temperature-dependent standing loss.
+
+The runner persists apartment and building measurements through the same
+canonical contract and writes long-form apartment/event ledgers. Its energy
+balance explicitly includes delivered hot-water energy, standing loss, boiler
+thermal output, plant input, and the change in stored tank energy.
+
 ## Repository structure
 
 ```text
@@ -93,6 +110,7 @@ report/       LaTeX design and findings report
    central-boiler energy accounting, and water/energy conservation.
 3. **Iteration C / Experiment 2 (complete):** imperfect sensing, delayed or
    missing readings, rollover/reset handling, and auditable reconciliation.
-4. Add apartments, building-level aggregation, and shared boiler accounting.
+4. **Iteration D / Experiment 3 (complete):** apartments, exact building-level
+   aggregation, and a dynamic shared DHW store with boiler and standing losses.
 5. Add reconciliation analytics for plausibility, leaks, and anomalies.
 6. Replace simulated adapters with field-device and building-system adapters.

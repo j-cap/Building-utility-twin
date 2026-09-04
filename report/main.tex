@@ -2,7 +2,7 @@
 \usepackage[margin=25mm]{geometry}
 \usepackage{amsmath,amssymb,booktabs,graphicx,hyperref}
 \usepackage{xcolor}
-\graphicspath{{../results/experiment_0/}{../results/experiment_1/}{../results/experiment_2/}}
+\graphicspath{{../results/experiment_0/}{../results/experiment_1/}{../results/experiment_2/}{../results/experiment_3/}}
 \hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue}
 
 \title{Building Utility Twin\\\large Simulation Framework and Experiment Plan}
@@ -29,6 +29,8 @@ complexity are added. Iteration B then introduces the first physically meaningfu
 coupling: domestic hot-water consumption supplied by a central boiler.
 Iteration C keeps that physical reference fixed and tests the meter and
 communications boundary under realistic data-path imperfections.
+Iteration D expands the topology to multiple apartments and replaces the
+instantaneous boiler with a dynamic shared domestic-hot-water store.
 
 \section{System architecture}
 The intended data path is
@@ -494,9 +496,176 @@ alongside the canonical observation. Experiment~2 validates that this metadata
 can be kept outside the device-independent measurement payload without changing
 its quantity, unit, or observation-time semantics.
 
+\section{Iteration D: apartments and shared DHW storage}
+Experiment~3 introduces the first building topology. Four independently seeded
+apartments generate fixture demand, apartment meters feed an exact building
+aggregator, and the combined hot-water branch draws from a shared, well-mixed
+storage tank. The experiment returns to ideal meter transport so that topology
+and storage dynamics can be isolated; composing the Experiment~2 telemetry
+faults with this building is a later integration task.
+
+\subsection{Apartment population and aggregation}
+Each apartment reuses the Experiment~1 fixture shares and hot-water fraction,
+but has its own occupancy, demand scale, and random seed. Both per-person total
+and hot-water targets are multiplied by the same scale, preserving the
+reference hot-water fraction. Table~\ref{tab:experiment3-apartments} states the
+complete designed population.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Apartment assumptions and realized Experiment~3 totals.}
+  \label{tab:experiment3-apartments}
+  \begin{tabular}{lrrrrr}
+    \toprule
+    Apartment & Occupants & Scale & Events & Total [L] & Hot [L] \\
+    \midrule
+    101 & 1 & 0.80 & 17 & 104.0 & 36.0 \\
+    102 & 2 & 1.00 & 38 & 260.0 & 90.0 \\
+    201 & 3 & 1.10 & 60 & 429.0 & 148.5 \\
+    202 & 4 & 0.90 & 66 & 468.0 & 162.0 \\
+    \midrule
+    Building & 10 & -- & 181 & 1261.0 & 436.5 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+For each branch $x\in\{\mathrm{tot},\mathrm{cold},\mathrm{hot}\}$, building
+flow and volume are
+\begin{equation}
+  q_{x,\mathrm{bldg},k}=\sum_{a=1}^{N_a}q_{x,a,k},\qquad
+  V_{x,\mathrm{bldg},k}=\sum_{a=1}^{N_a}V_{x,a,k}.
+\end{equation}
+The total branch must also satisfy
+$q_{\mathrm{tot},\mathrm{bldg},k}=
+q_{\mathrm{cold},\mathrm{bldg},k}+q_{\mathrm{hot},\mathrm{bldg},k}$.
+This gives both pointwise and cumulative reconciliation checks. The coincidence
+benefit is summarized by the diversity factor
+\begin{equation}
+  f_{\mathrm{div}}=
+  \frac{\sum_a\max_k q_{\mathrm{tot},a,k}}
+       {\max_k q_{\mathrm{tot},\mathrm{bldg},k}}.
+\end{equation}
+
+\subsection{Shared storage and boiler model}
+The reference store contains $300\,\mathrm{L}$ of well-mixed water. Its
+temperature state is represented by thermal energy above the cold-inlet
+baseline,
+\begin{equation}
+  E_k=\rho c_p V_{\mathrm{tank}}
+  \left(T_{\mathrm{tank},k}-T_{\mathrm{cold}}\right).
+\end{equation}
+At each one-minute step, the energy balance is
+\begin{equation}
+  E_{k+1}=E_k+
+  \left(P_{\mathrm{boiler},k}-P_{\mathrm{DHW},k}
+        -P_{\mathrm{loss},k}\right)\Delta t,
+\end{equation}
+where
+\begin{align}
+  P_{\mathrm{DHW},k}
+    &=\rho c_p q_{\mathrm{hot},\mathrm{bldg},k}
+      \left(T_{\mathrm{tank},k}-T_{\mathrm{cold}}\right),\\
+  P_{\mathrm{loss},k}
+    &=UA\max\left(T_{\mathrm{tank},k}-T_{\mathrm{amb}},0\right).
+\end{align}
+The assumptions are $T_{\mathrm{cold}}=10\,^{\circ}\mathrm{C}$,
+$T_{\mathrm{amb}}=20\,^{\circ}\mathrm{C}$, and
+$UA=3\,\mathrm{W\,K^{-1}}$. A hysteresis controller enables the boiler at
+$55\,^{\circ}\mathrm{C}$ and disables it at $60\,^{\circ}\mathrm{C}$.
+Thermal output is capped at $30\,\mathrm{kW}$ and plant input is
+$P_{\mathrm{in}}=P_{\mathrm{boiler}}/0.90$. Power is reduced near the upper
+energy bound to avoid numerical overheating.
+
+\subsection{Acceptance criteria and verification}
+Experiment~3 is accepted when (i) apartment branches aggregate exactly at every
+step and at the cumulative registers, (ii) the building hot/cold split
+conserves water, (iii) the tank balance closes including stored-energy change,
+(iv) boiler input and thermal output satisfy the configured efficiency, (v)
+tank temperature remains above $50\,^{\circ}\mathrm{C}$ and at or below
+$60\,^{\circ}\mathrm{C}$, (vi) multiple apartments are active
+simultaneously and the heater cycles, (vii) 56,180 canonical observations
+round-trip through storage, and (viii) repeated runs are byte-identical.
+
+The combined test suite now contains 25 passing tests. New checks cover exact
+apartment targets, pointwise and cumulative aggregation, invalid duplicate
+apartment identities, tank state and power bounds, the full energy balance, and
+complete repeated-run output equality. CI regenerates Experiments~0--3 twice
+and compares all machine-readable artifacts byte-for-byte.
+
+\section{Experiment 3 results}
+The four apartments produce 181 fixture events and
+$1261.0\,\mathrm{L}$ of total water, including $436.5\,\mathrm{L}$ of hot
+water. Table~\ref{tab:experiment3-results} summarizes the building and shared
+plant result.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Experiment~3 building and shared-storage results.}
+  \label{tab:experiment3-results}
+  \begin{tabular}{lr}
+    \toprule
+    Metric & Result \\
+    \midrule
+    Building peak / sum of apartment peaks & 15.096 / 41.997 L/min \\
+    Diversity factor & 2.782 \\
+    Maximum simultaneously active apartments & 3 of 4 \\
+    Minimum / weighted-mean / final tank temperature
+      & 54.235 / 57.116 / 58.890 $^{\circ}$C \\
+    Heater cycles / runtime & 12 / 58 min \\
+    Peak DHW / boiler thermal power & 28.288 / 30.000 kW \\
+    Delivered DHW energy & 23.808 kWh \\
+    Standing loss & 2.756 kWh \\
+    Boiler thermal output / plant input & 26.179 / 29.087 kWh \\
+    Boiler conversion loss & 2.909 kWh \\
+    Stored-energy change & $-0.385$ kWh \\
+    Maximum water residual & $1.33\times10^{-15}\,\mathrm{m^3}$ \\
+    Maximum energy residual & $8.94\times10^{-8}\,\mathrm{J}$ \\
+    Canonical measurements / acceptance & 56,180 / pass \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The separate apartment peaks sum to $41.997\,\mathrm{L\,min^{-1}}$, but the
+largest coincident building flow is only
+$15.096\,\mathrm{L\,min^{-1}}$. Thus the realized building peak is 35.9\% of
+the naive peak sum and $f_{\mathrm{div}}=2.782$. This is the first useful
+system-level result: independently timed demands materially reduce the
+simultaneous flow that the shared infrastructure sees.
+
+Figure~\ref{fig:experiment3} shows how the same coincidence drives the storage
+plant. The tank buffers the combined draws, falls below the $55\,^{\circ}$C
+switch-on threshold during some one-minute intervals, and is reheated by twelve
+boiler cycles. Its minimum temperature is $54.235\,^{\circ}$C, above the
+declared $50\,^{\circ}$C service limit, while the volume-weighted supply
+temperature is $57.116\,^{\circ}$C.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.84\linewidth]{experiment_3_building_storage.png}
+  \caption{Experiment~3. From top to bottom: apartment and building flows;
+  cumulative apartment contributions and building total; tank temperature,
+  thermostat band, and boiler thermal output; cumulative plant input, boiler
+  output, delivered DHW energy, and standing loss.}
+  \label{fig:experiment3}
+\end{figure}
+
+The plant draws $29.087\,\mathrm{kWh}$. Of the $26.179\,\mathrm{kWh}$
+thermal boiler output, $23.808\,\mathrm{kWh}$ reaches the hot-water branch and
+$2.756\,\mathrm{kWh}$ is lost from storage. The tank ends
+$0.385\,\mathrm{kWh}$ below its initial state, which closes the balance:
+boiler output minus delivered energy and standing loss equals the stored-energy
+change. Omitting this state term would make daily allocation appear inconsistent.
+
+These values characterize one designed reference day, not a sizing study. The
+apartment scales and fixture allocation are assumptions; daily totals are
+normalized and day-to-day variation is absent. The tank is perfectly mixed;
+pipe hydraulics, distribution temperature drop, recirculation, draw-off
+stratification, and boiler transients are not modelled. Ideal apartment meters
+also isolate Experiment~3 from the telemetry faults of Experiment~2. Multi-seed
+and parameter sweeps are required before the diversity factor, cycling, or loss
+fractions can support equipment or business decisions.
+
 \section{Planned extensions}
-Experiment~3 will add apartments, building-level aggregation, and a shared
-boiler with storage and loss dynamics.
 Experiment~4 will add reconciliation, plausibility, leak, and anomaly analytics.
 Experiment~5 will replace a simulated source with a real file or API adapter
 while preserving the canonical contract, storage, and analysis layers.

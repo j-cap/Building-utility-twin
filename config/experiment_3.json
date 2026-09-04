@@ -1,0 +1,47 @@
+{
+  "experiment_id": "iteration_d_experiment_3",
+  "physical_template_config": "experiment_1.json",
+  "aggregation_tolerance_m3": 1e-12,
+  "energy_tolerance_j": 1e-5,
+  "asset_ids": {
+    "shared_tank": "shared-dhw-tank-001",
+    "shared_boiler": "shared-dhw-boiler-001"
+  },
+  "apartments": [
+    {
+      "apartment_id": "apartment-101",
+      "occupants": 1,
+      "demand_scale": 0.80,
+      "seed": 20260905
+    },
+    {
+      "apartment_id": "apartment-102",
+      "occupants": 2,
+      "demand_scale": 1.00,
+      "seed": 20260906
+    },
+    {
+      "apartment_id": "apartment-201",
+      "occupants": 3,
+      "demand_scale": 1.10,
+      "seed": 20260907
+    },
+    {
+      "apartment_id": "apartment-202",
+      "occupants": 4,
+      "demand_scale": 0.90,
+      "seed": 20260908
+    }
+  ],
+  "shared_tank": {
+    "tank_volume_l": 300.0,
+    "initial_temperature_c": 60.0,
+    "thermostat_lower_c": 55.0,
+    "thermostat_upper_c": 60.0,
+    "minimum_service_temperature_c": 50.0,
+    "ambient_temperature_c": 20.0,
+    "standing_loss_coefficient_w_k": 3.0,
+    "boiler_max_thermal_power_kw": 30.0,
+    "boiler_efficiency": 0.90
+  }
+}
