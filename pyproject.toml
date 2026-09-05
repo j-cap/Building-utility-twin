@@ -4,12 +4,18 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "building-utility-twin"
-version = "0.6.0"
+version = "0.7.0"
 description = "Simulation-first building utility digital twin"
 requires-python = ">=3.11"
 dependencies = [
+    "fastapi>=0.115,<0.120",
     "matplotlib>=3.7",
+    "sqlalchemy>=2.0,<3",
+    "uvicorn>=0.30,<1",
 ]
+
+[project.optional-dependencies]
+test = ["httpx>=0.27,<1"]
 
 [project.scripts]
 building-utility-experiment-0 = "building_utility_twin.experiment:main"
@@ -18,6 +24,8 @@ building-utility-experiment-2 = "building_utility_twin.experiment_2:main"
 building-utility-experiment-3 = "building_utility_twin.experiment_3:main"
 building-utility-experiment-4 = "building_utility_twin.experiment_4:main"
 building-utility-experiment-5 = "building_utility_twin.experiment_5:main"
+building-utility-pilot-p1 = "building_utility_twin.pilot_p1:main"
+building-utility-api = "building_utility_twin.api:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
