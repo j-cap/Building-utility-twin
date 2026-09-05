@@ -2,7 +2,7 @@
 \usepackage[margin=25mm]{geometry}
 \usepackage{amsmath,amssymb,booktabs,graphicx,hyperref,placeins}
 \usepackage{xcolor}
-\graphicspath{{../results/experiment_0/}{../results/experiment_1/}{../results/experiment_2/}{../results/experiment_3/}{../results/experiment_4/}{../results/experiment_5/}{../results/pilot_p1/}}
+\graphicspath{{../results/experiment_0/}{../results/experiment_1/}{../results/experiment_2/}{../results/experiment_3/}{../results/experiment_4/}{../results/experiment_5/}{../results/pilot_p1/}{../results/pilot_p2/}}
 \hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue}
 
 \title{Building Utility Twin\\\large Simulation Framework, Experiments, and Pilot Preparation}
@@ -1077,13 +1077,128 @@ it is regenerated from the versioned configuration; the compact summary and
 figure are retained as evidence.
 
 \FloatBarrier
+\section{Pilot preparation P2: operator dashboard}
+P2 asks whether the P1 application boundary is sufficient for a coherent
+operator workflow before a real operator or field source is available. The
+implementation is a replaceable Streamlit and Plotly client. It reads all
+portfolio, building, meter, import, and review data through the versioned HTTP
+API and never accesses SQLite directly. This separation is intentional: a later
+web client can replace Streamlit without changing persistence or analytics.
+
+\subsection{Operator surfaces and evidence model}
+The interface contains five working surfaces. Portfolio health summarizes
+consumption, building-meter completeness, quality, and review load. Building
+balance compares the building register with the sum of apartment registers at
+complete common boundaries. Meter detail exposes cumulative history, quality
+markers, completeness, and a canonical-record sample. The import view retains
+source digest and accepted, duplicate, and completion information. The review
+queue filters evidence by status and building and lets an operator persist the
+states open, investigating, or resolved together with a note.
+
+P2 adds five API routes for portfolio overview, building balance, meter profile,
+issue listing, and issue update; the application therefore exposes 11 routes in
+total. Review records are an additive table in the versioned backend. Their
+identifiers, detection time, severity, and evidence are deterministic. Operator
+status, note, and update time are mutable audit fields.
+
+The reference queue deliberately uses simple data-quality rules rather than
+introducing P3 analytics early. A meter is queued if observed completeness is
+below 97.5\% or if more than 2.0\% of its observed readings are suspect. An item
+becomes a warning below 96.5\% completeness or above 2.5\% suspect share;
+otherwise it is informational. Every item stores its observed, expected,
+missing, and suspect counts together with the thresholds. These values are
+chosen to exercise the workflow under the P1 missingness model. They are not
+field-calibrated operating thresholds.
+
+Water balance is kept semantically separate from diagnosis. The dashboard calls
+the quantity a balance residual and states that it is evidence, not attribution
+to a leak or meter fault. Period consumption uses the retained first and final
+boundaries. The plotted register comparison uses only timestamps available for
+the building meter and every apartment meter, which prevents unequal timestamp
+sets from creating a spurious residual.
+
+Acceptance requires all five surfaces to be present through the API contract,
+all six buildings and the import audit to be visible, meter quality and common-
+boundary balance evidence to be exposed, every queue item to carry its trigger
+evidence, and review updates to survive a new database session. Error paths for
+unknown resources and empty review updates must be explicit. The compact
+dashboard snapshot and summary must be byte-identical across independent runs.
+
+\section{Pilot P2 results}
+The reference portfolio produces 35 active review items across 78 meters. Of
+these, 28 are informational and seven are warnings. Low completeness triggers
+29 items, elevated suspect share triggers nine, and three items satisfy both
+conditions. This overlap confirms that the queue consolidates evidence by meter
+rather than creating duplicate work items for separate quality symptoms.
+
+The six building meters have 99.17--99.86\% completeness. Depending on the
+building, 515--548 of 721 hourly boundaries are common to the building meter and
+all 12 apartment meters. At those common boundaries the synthetic physical
+identity is retained. The maximum absolute 30-day building-minus-apartment
+period residual is $0.0002\,\mathrm{L}$, which is attributable to serialization
+rounding and far below the explicit $0.01\,\mathrm{L}$ tolerance. Table~\ref{tab:p2-results}
+summarizes the frozen result.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Pilot-preparation P2 operator-workflow results.}
+  \label{tab:p2-results}
+  \begin{tabular}{lr}
+    \toprule
+    Metric & Result \\
+    \midrule
+    Operator pages / API routes & 5 / 11 \\
+    Buildings / meters / readings & 6 / 78 / 54,917 \\
+    Active review items & 35 \\
+    Informational / warning & 28 / 7 \\
+    Completeness / suspect triggers & 29 / 9 \\
+    Items satisfying both triggers & 3 \\
+    Building-meter completeness range & 99.17--99.86\% \\
+    Common boundaries per building & 515--548 \\
+    Maximum absolute period residual & 0.0002 L \\
+    Reproducible snapshot / acceptance & yes / pass \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\FloatBarrier
+Figure~\ref{fig:p2} shows the first portfolio-health surface in a compact,
+reproducible form. The interface puts the portfolio scale and review load in the
+first viewport, then relates building consumption to meter completeness. The
+amber review coloring indicates operator work, not diagnosed leakage.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.96\linewidth]{pilot_p2_operator_overview.png}
+  \caption{Pilot P2 operator overview for the deterministic six-building
+  portfolio. The dashed line is the configured review threshold; it is an
+  interface test value rather than a field-calibrated limit.}
+  \label{fig:p2}
+\end{figure}
+
+A local in-process diagnostic over ten requests gave median response times of
+approximately 0.94 s for the full portfolio overview, 0.14 s for one building
+balance, 0.025 s for one meter profile, and 0.002 s for the issue list. These
+figures are implementation diagnostics rather than portable benchmarks. They
+show that the MVP is responsive at six-building scale while the overview's
+repeated aggregation should be replaced by precomputed summaries or more direct
+queries before a materially larger portfolio is claimed.
+
+P2 connects persistent canonical readings to an evidence-backed operator
+review. It does not validate whether the chosen
+views match a property manager's workflow, whether the thresholds control false
+alarms, or whether a residual identifies leakage. It also omits authentication,
+multi-user concurrency, notification, deployment packaging, and accessibility
+testing with representative users. Those omissions remain explicit inputs to
+P3 and P5 rather than hidden assumptions.
+
+\FloatBarrier
 \section{Planned extensions}
-P2 will build an operator dashboard against the P1 API, beginning with portfolio
-health, building and meter views, import status, and evidence-backed anomaly
-review. P3 will separate data-quality checks, accounting/plausibility measures,
-and diagnostic research into explicit evidence levels. P4 will generalize the
-vendor-adapter toolkit, and P5 will package the demonstrator with operational
-safeguards.
+P3 will separate data-quality checks, accounting and plausibility measures, and
+diagnostic research into explicit evidence levels. It should use the P2 review
+queue as the presentation boundary while keeping threshold selection and
+diagnostic claims in a test bench. P4 will generalize the vendor-adapter toolkit,
+and P5 will package the demonstrator with operational safeguards.
 
 Experiment~6 begins only when a real source is available. It should process an
 unmodified, de-identified physical meter export and record its format version,

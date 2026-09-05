@@ -1,0 +1,42 @@
+{
+  "acceptance": {
+    "checks": {
+      "balance_worded_as_evidence": true,
+      "building_balance_exposed": true,
+      "five_operator_pages": true,
+      "import_audit_visible": true,
+      "meter_quality_visible": true,
+      "operator_api_complete": true,
+      "portfolio_visible": true,
+      "review_items_are_evidence_backed": true,
+      "review_queue_populated": true
+    },
+    "passed": true
+  },
+  "configuration_digest": "bb83cce95f61a96e89617c9a1a9a39ec37835b09d5c6aead3fd38252d02e594b",
+  "dashboard": {
+    "api_endpoint_count": 11,
+    "page_count": 5,
+    "pages": [
+      "Portfolio health",
+      "Building balance",
+      "Meter detail",
+      "Imports",
+      "Review queue"
+    ],
+    "snapshot_sha256": "c184ff6f2162b22a4ffd64db9ca5cf0e7df4ab3220d9a9da0b9c31944cc09e24"
+  },
+  "portfolio_view": {
+    "active_issue_count": 35,
+    "building_count": 6,
+    "issue_severity_counts": {
+      "information": 28,
+      "warning": 7
+    },
+    "maximum_absolute_period_balance_residual_l": 0.0002,
+    "minimum_building_meter_completeness_percent": 99.1678
+  },
+  "schema_version": "1.0",
+  "scope_note": "P2 verifies an API-backed operator workflow with deterministic synthetic data; review items are data-quality evidence, not leak diagnoses.",
+  "work_package": "pilot_preparation_p2"
+}

@@ -58,6 +58,8 @@ Acceptance evidence:
 
 ### P2 -- Operator dashboard MVP
 
+Status: **complete**
+
 Build a replaceable Streamlit/Plotly client against the P1 API. Initial pages:
 
 1. portfolio health and active issues;
@@ -69,6 +71,35 @@ Build a replaceable Streamlit/Plotly client against the P1 API. Initial pages:
 The dashboard must label residuals as balance anomalies rather than confirmed
 leaks. A custom web frontend remains optional until a real operator workflow is
 known.
+
+Implemented capabilities:
+
+- the Streamlit application obtains all operational data through a replaceable
+  HTTP client and never reads the SQLite database directly;
+- portfolio cards summarize consumption, building-meter completeness, and the
+  active review load across all six buildings;
+- building views compare the building register with the apartment-register sum
+  only at common boundaries and explicitly separate balance evidence from fault
+  attribution;
+- meter views expose register history, quality markers, completeness, and the
+  canonical records behind the visualization;
+- import provenance remains visible alongside accepted and duplicate counts;
+- deterministic data-quality review items contain threshold evidence, severity,
+  status, and a persistent operator note;
+- the reference dashboard snapshot and compact overview figure are
+  reproducible.
+
+Acceptance evidence:
+
+- all five planned operator pages are represented by tested API calls;
+- the six-building portfolio, one complete import, meter quality, and water
+  balance are visible through the dashboard contract;
+- every review item includes the measurements, completeness, suspect share,
+  and thresholds that caused it;
+- review status and notes survive a new database session;
+- unknown resources and invalid review updates fail explicitly;
+- two independent P2 runs produce byte-identical summary and dashboard
+  snapshots.
 
 ### P3 -- Analytics test bench
 
