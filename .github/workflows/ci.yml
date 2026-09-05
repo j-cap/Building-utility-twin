@@ -16,7 +16,9 @@ jobs:
       - name: Install package
         run: python -m pip install -e .[test]
       - name: Run tests
-        run: python -m unittest discover -s tests -v
+        run: |
+          python -m unittest discover -s tests -v
+          python -m compileall -q src scripts tests
       - name: Regenerate Experiment 0
         run: |
           python scripts/run_experiment_0.py --config config/experiment_0.json --output /tmp/experiment_0_a
@@ -45,6 +47,10 @@ jobs:
         run: |
           python scripts/run_pilot_p1.py --config config/pilot_p1.json --output /tmp/pilot_p1_a
           python scripts/run_pilot_p1.py --config config/pilot_p1.json --output /tmp/pilot_p1_b
+      - name: Regenerate Pilot P2
+        run: |
+          python scripts/run_pilot_p2.py --config config/pilot_p1.json --output /tmp/pilot_p2_a
+          python scripts/run_pilot_p2.py --config config/pilot_p1.json --output /tmp/pilot_p2_b
       - name: Verify byte-for-byte reproducibility
         run: |
           cmp /tmp/experiment_0_a/measurements.jsonl /tmp/experiment_0_b/measurements.jsonl
@@ -76,3 +82,5 @@ jobs:
           cmp /tmp/experiment_5_a/summary.json /tmp/experiment_5_b/summary.json
           cmp /tmp/pilot_p1_a/api_snapshot.json /tmp/pilot_p1_b/api_snapshot.json
           cmp /tmp/pilot_p1_a/summary.json /tmp/pilot_p1_b/summary.json
+          cmp /tmp/pilot_p2_a/dashboard_snapshot.json /tmp/pilot_p2_b/dashboard_snapshot.json
+          cmp /tmp/pilot_p2_a/summary.json /tmp/pilot_p2_b/summary.json

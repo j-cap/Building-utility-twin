@@ -147,6 +147,9 @@ python scripts/run_experiment_5.py \
 python scripts/run_pilot_p1.py \
   --config config/pilot_p1.json \
   --output results/pilot_p1
+python scripts/run_pilot_p2.py \
+  --config config/pilot_p1.json \
+  --output results/pilot_p2
 ```
 
 The semicolon-delimited source fixture uses German column names, local
@@ -174,3 +177,33 @@ Interactive OpenAPI documentation is then available at `/docs`. The backend
 exposes portfolio, building, meter, measurement, and import-history endpoints.
 This is application-plumbing evidence from deterministic synthetic data, not a
 field-data or operational-performance claim.
+
+## Pilot Preparation P2
+
+P2 adds an API-backed operator workspace with five views: portfolio health,
+building balance, meter detail, imports, and a persistent review queue. The
+review queue exposes deterministic data-quality evidence and operator notes. A
+water-balance residual is never labeled as a confirmed leak because the
+aggregate signal alone cannot identify its cause.
+
+Install the optional dashboard dependencies and generate its database:
+
+```bash
+python -m pip install -e .[dashboard]
+python scripts/run_pilot_p2.py \
+  --config config/pilot_p1.json \
+  --output results/pilot_p2
+```
+
+Start the API and dashboard in separate terminals:
+
+```bash
+python -m building_utility_twin.api \
+  --database results/pilot_p2/backend.sqlite3
+python -m streamlit run src/building_utility_twin/dashboard.py
+```
+
+The default dashboard connects to `http://127.0.0.1:8000`; the URL can be
+changed in its sidebar or through `BUILDING_UTILITY_API_URL`. Authentication,
+deployment packaging, and field-derived operational thresholds remain later
+pilot work.
