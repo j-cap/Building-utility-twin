@@ -132,5 +132,21 @@ report/       LaTeX design and findings report
    aggregation, and a dynamic shared DHW store with boiler and standing losses.
 5. **Iteration E / Experiment 4 (complete):** building-wide imperfect telemetry,
    water-balance anomaly detection, and shared-storage loss diagnostics.
-6. **Iteration F / Experiment 5:** replace simulated adapters with a historical
-   meter export or API while preserving contracts, storage, and analytics.
+6. **Iteration F / Experiment 5 (complete):** replace the simulated source at
+   the ingestion boundary with a frozen, representative vendor-format meter
+   export while preserving canonical contracts, storage, and water-balance
+   analytics. The fixture tests adapter substitution; it is not field evidence.
+
+Run the adapter experiment with:
+
+```bash
+python scripts/run_experiment_5.py \
+  --config config/experiment_5.json \
+  --output results/experiment_5
+```
+
+The semicolon-delimited source fixture uses German column names, local
+Europe/Vienna timestamps, decimal-comma litre registers, and vendor quality
+codes. `scripts/build_experiment_5_fixture.py` documents its controlled
+provenance; the experiment runner consumes only the frozen CSV and does not
+invoke any simulator.

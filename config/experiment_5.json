@@ -1,0 +1,35 @@
+{
+  "experiment_id": "iteration_f_experiment_5",
+  "input_path": "../fixtures/experiment_5/vendor_meter_export.csv",
+  "expected_input_sha256": "9b40ecc18e880e64bf856a82080a74f54d1f48c69b33ebeaa35ecc24fa70ade8",
+  "adapter": {
+    "delimiter": ";",
+    "timestamp_format": "%d.%m.%Y %H:%M:%S",
+    "timezone": "Europe/Vienna",
+    "decimal_separator": ",",
+    "source_unit": "L",
+    "source_name": "vendor-csv-adapter",
+    "fields": {
+      "meter_id": "Zaehlernummer",
+      "timestamp": "Zeitstempel",
+      "value": "Zaehlerstand_L",
+      "status": "Status"
+    },
+    "quality_mapping": {
+      "OK": "good",
+      "GESCHAETZT": "suspect"
+    },
+    "meters": {
+      "BLDG-H2O-001": {"asset_id": "building-water-meter", "role": "building"},
+      "APT-101-H2O": {"asset_id": "apartment-101-water-meter", "role": "apartment"},
+      "APT-102-H2O": {"asset_id": "apartment-102-water-meter", "role": "apartment"},
+      "APT-201-H2O": {"asset_id": "apartment-201-water-meter", "role": "apartment"},
+      "APT-202-H2O": {"asset_id": "apartment-202-water-meter", "role": "apartment"}
+    }
+  },
+  "analytics": {"water_balance_alarm_l_min": 0.15},
+  "reference_windows": [
+    {"name": "unmetered_leak", "start_utc": "2026-01-15T03:00:00Z", "end_utc": "2026-01-15T07:00:00Z"},
+    {"name": "apartment_meter_underregistration", "start_utc": "2026-01-15T11:00:00Z", "end_utc": "2026-01-15T15:00:00Z"}
+  ]
+}
