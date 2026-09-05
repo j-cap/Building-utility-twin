@@ -14,7 +14,7 @@ jobs:
           python-version: "3.12"
           cache: pip
       - name: Install package
-        run: python -m pip install -e .
+        run: python -m pip install -e .[test]
       - name: Run tests
         run: python -m unittest discover -s tests -v
       - name: Regenerate Experiment 0
@@ -41,6 +41,10 @@ jobs:
         run: |
           python scripts/run_experiment_5.py --config config/experiment_5.json --output /tmp/experiment_5_a
           python scripts/run_experiment_5.py --config config/experiment_5.json --output /tmp/experiment_5_b
+      - name: Regenerate Pilot P1
+        run: |
+          python scripts/run_pilot_p1.py --config config/pilot_p1.json --output /tmp/pilot_p1_a
+          python scripts/run_pilot_p1.py --config config/pilot_p1.json --output /tmp/pilot_p1_b
       - name: Verify byte-for-byte reproducibility
         run: |
           cmp /tmp/experiment_0_a/measurements.jsonl /tmp/experiment_0_b/measurements.jsonl
@@ -70,3 +74,5 @@ jobs:
           cmp /tmp/experiment_5_a/water_balance.csv /tmp/experiment_5_b/water_balance.csv
           cmp /tmp/experiment_5_a/alarms.csv /tmp/experiment_5_b/alarms.csv
           cmp /tmp/experiment_5_a/summary.json /tmp/experiment_5_b/summary.json
+          cmp /tmp/pilot_p1_a/api_snapshot.json /tmp/pilot_p1_b/api_snapshot.json
+          cmp /tmp/pilot_p1_a/summary.json /tmp/pilot_p1_b/summary.json

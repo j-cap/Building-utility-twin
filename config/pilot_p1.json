@@ -1,0 +1,16 @@
+{
+  "portfolio_id": "synthetic-portfolio-001",
+  "portfolio_name": "Synthetic Vienna Portfolio",
+  "start": "2026-01-01T00:00:00+00:00",
+  "days": 30,
+  "interval_minutes": 60,
+  "building_count": 6,
+  "apartments_per_building": 12,
+  "minimum_occupants": 1,
+  "maximum_occupants": 4,
+  "daily_liters_per_person": 125.0,
+  "apartment_missing_probability": 0.025,
+  "building_missing_probability": 0.005,
+  "suspect_probability": 0.015,
+  "seed": 20260910
+}

@@ -2,10 +2,10 @@
 \usepackage[margin=25mm]{geometry}
 \usepackage{amsmath,amssymb,booktabs,graphicx,hyperref,placeins}
 \usepackage{xcolor}
-\graphicspath{{../results/experiment_0/}{../results/experiment_1/}{../results/experiment_2/}{../results/experiment_3/}{../results/experiment_4/}{../results/experiment_5/}}
+\graphicspath{{../results/experiment_0/}{../results/experiment_1/}{../results/experiment_2/}{../results/experiment_3/}{../results/experiment_4/}{../results/experiment_5/}{../results/pilot_p1/}}
 \hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue}
 
-\title{Building Utility Twin\\\large Simulation Framework and Experiment Plan}
+\title{Building Utility Twin\\\large Simulation Framework, Experiments, and Pilot Preparation}
 \author{Jakob Weber}
 \date{\today}
 
@@ -966,15 +966,131 @@ retains the same identifiability limit: it signals missing volume but cannot
 distinguish a leak from meter under-registration without additional evidence.
 
 \FloatBarrier
+\section{Pilot preparation P1: persistent backend}
+Because authentic meter-system data are not yet available, the work after
+Experiment~5 is separated into a pilot-preparation track. Experiment~6 remains
+reserved for an unchanged, de-identified export from a physical meter system.
+P1 instead asks whether the validated contracts can support a persistent
+multi-building application backend and a stable interface for the planned
+dashboard.
+
+\subsection{Portfolio generator and relational model}
+The P1 reference configuration represents 30 days at hourly boundaries for six
+buildings, each containing 12 apartments. Apartment occupancy is seeded between
+one and four people. A normalized diurnal profile, apartment-specific stochastic
+variation, and a nominal consumption of 125 L per person and day generate the
+cumulative registers. Building consumption is calculated as the exact sum of
+its apartment increments before observation missingness is applied.
+
+The generator emits the existing canonical cumulative-volume contract and adds
+explicit portfolio, building, apartment, and meter topology. The reference case
+contains 72 apartments and 78 meters. Apartment readings have a 2.5\% configured
+missing probability, building readings 0.5\%, and all readings a 1.5\% suspect
+quality probability. First and final boundaries are retained. These assumptions
+exercise persistence and interface behavior; they are not estimates of real
+fleet data quality.
+
+P1 replaces experiment-local JSONL as the application store with a normalized
+SQLite database. Separate tables hold schema metadata, portfolios, buildings,
+apartments, meters, import jobs, and canonical measurements. Foreign keys encode
+the topology, measurement identifiers remain the canonical primary keys, and
+indexes support meter- and asset-time queries. SQLite provides a
+zero-administration demonstration backend; PostgreSQL support and formal schema
+migrations remain later product work.
+
+\subsection{Idempotent loading and read API}
+The portfolio configuration, topology, and canonical measurements define a
+stable SHA-256 content digest. This digest produces a deterministic import ID.
+The first load persists the topology and measurements in batches and records a
+completed import. Replaying the same snapshot returns the existing import and
+does not add data. A stored schema-version marker causes an explicit failure if
+the application opens an incompatible database.
+
+A FastAPI service exposes six routes: health, portfolio summary, building list,
+meters for one building, time-ordered measurements for one meter, and import
+history. The meter route supports bounded result size and optional time limits;
+unknown buildings and meters return HTTP~404. Interactive OpenAPI documentation
+is generated from the same application. P2 can therefore build the operator
+dashboard against a stable API rather than directly reading experiment files.
+
+Acceptance requires exact topology and measurement counts after persistence,
+a complete first load, a zero-write replay in which every input measurement is
+recognized as already stored, one auditable import, a complete building list in
+the API snapshot, explicit schema-version agreement, and byte-identical summary
+and API snapshots across independent runs. Eight new tests cover deterministic
+generation, exact end-register aggregation, configuration validation,
+persistence and query semantics, idempotency, incompatible schema rejection,
+API success and error paths, and end-to-end reproducibility. The full suite now
+contains 43 tests.
+
+\section{Pilot P1 results}
+The reference generator creates 54,917 canonical readings: 54,089 good and 828
+suspect. The reduction from the 56,238 scheduled boundaries is caused by the
+configured missingness. All generated topology and measurement records survive
+the first database load. The second load accepts zero records and reports all
+54,917 readings as duplicates under the same import ID. Table~\ref{tab:p1-results}
+summarizes the frozen result.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Pilot-preparation P1 persistence results.}
+  \label{tab:p1-results}
+  \begin{tabular}{lr}
+    \toprule
+    Metric & Result \\
+    \midrule
+    Duration / resolution & 30 days / 60 min \\
+    Buildings / apartments / meters & 6 / 72 / 78 \\
+    Generated canonical measurements & 54,917 \\
+    Good / suspect measurements & 54,089 / 828 \\
+    First-load accepted / duplicate & 54,917 / 0 \\
+    Replay accepted / duplicate & 0 / 54,917 \\
+    Stored imports & 1 \\
+    Read API routes & 6 \\
+    Backend schema version & 1 \\
+    Acceptance & pass \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\FloatBarrier
+Figure~\ref{fig:p1} shows the six persisted building-level series summarized as
+30-day volume and boundary completeness. Consumption differences follow the
+seeded occupant mix and stochastic demand. Building-meter completeness remains
+above 99\% for every building under the configured 0.5\% missing probability.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.88\linewidth]{pilot_p1_persistent_portfolio.png}
+  \caption{Pilot P1. Top: 30-day cumulative water consumption of the six
+  synthetic buildings; bottom: observed building-meter boundaries relative to
+  the complete hourly schedule.}
+  \label{fig:p1}
+\end{figure}
+
+P1 demonstrates that the canonical contracts can support an idempotent,
+queryable multi-building backend and provides the data boundary needed by the
+dashboard. It does not demonstrate production scale, concurrent ingestion,
+PostgreSQL portability, access control, vendor semantics, or operational
+analytics performance. The committed database is intentionally omitted because
+it is regenerated from the versioned configuration; the compact summary and
+figure are retained as evidence.
+
+\FloatBarrier
 \section{Planned extensions}
-Experiment~6 should replace the representative fixture with an unmodified,
-de-identified export from a physical meter system and record export-version,
-timezone, counter rollover, missingness, and calibration metadata. A separate
-training or baseline period should select thresholds before held-out evaluation.
-In parallel, a broader validation campaign should vary demand and telemetry
-seeds, anomaly sizes and durations, threshold selection data, and overlap
-between physical and sensor faults. A pilot must also define the extra evidence
-required to distinguish leaks from meter errors.
+P2 will build an operator dashboard against the P1 API, beginning with portfolio
+health, building and meter views, import status, and evidence-backed anomaly
+review. P3 will separate data-quality checks, accounting/plausibility measures,
+and diagnostic research into explicit evidence levels. P4 will generalize the
+vendor-adapter toolkit, and P5 will package the demonstrator with operational
+safeguards.
+
+Experiment~6 begins only when a real source is available. It should process an
+unmodified, de-identified physical meter export and record its format version,
+timezone, unit semantics, counter lifecycle, missingness, and calibration
+metadata. A separate baseline period must select thresholds before held-out
+evaluation. A real pilot must also define the additional evidence required to
+distinguish leaks from meter errors.
 
 \clearpage
 \begingroup

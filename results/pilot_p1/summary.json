@@ -1,0 +1,74 @@
+{
+  "acceptance": {
+    "checks": {
+      "api_snapshot_has_all_buildings": true,
+      "first_load_complete": true,
+      "measurement_round_trip": true,
+      "replay_idempotent": true,
+      "schema_version_current": true,
+      "single_auditable_import": true,
+      "topology_round_trip": true
+    },
+    "passed": true
+  },
+  "api": {
+    "endpoint_count": 6,
+    "snapshot_sha256": "9bce79507c57c1302bcfa187a520dc2e94c985685be7349d3afcc7cf2642a56b"
+  },
+  "configuration": {
+    "apartment_missing_probability": 0.025,
+    "apartments_per_building": 12,
+    "building_count": 6,
+    "building_missing_probability": 0.005,
+    "daily_liters_per_person": 125.0,
+    "days": 30,
+    "interval_minutes": 60,
+    "maximum_occupants": 4,
+    "minimum_occupants": 1,
+    "portfolio_id": "synthetic-portfolio-001",
+    "portfolio_name": "Synthetic Vienna Portfolio",
+    "seed": 20260910,
+    "start": "2026-01-01T00:00:00+00:00",
+    "suspect_probability": 0.015
+  },
+  "generated": {
+    "apartment_count": 72,
+    "building_count": 6,
+    "measurement_count": 54917,
+    "meter_count": 78,
+    "portfolio_digest": "bb83cce95f61a96e89617c9a1a9a39ec37835b09d5c6aead3fd38252d02e594b",
+    "quality_counts": {
+      "good": 54089,
+      "suspect": 828
+    }
+  },
+  "persistence": {
+    "backend": "SQLite",
+    "database_counts": {
+      "apartment_count": 72,
+      "building_count": 6,
+      "import_count": 1,
+      "measurement_count": 54917,
+      "meter_count": 78,
+      "portfolio_count": 1
+    },
+    "first_load": {
+      "accepted_count": 54917,
+      "duplicate_count": 0,
+      "import_id": "0e26beb4-7a67-5b9b-bcfe-8b80edc51643",
+      "replayed": false,
+      "source_row_count": 54917
+    },
+    "replay": {
+      "accepted_count": 0,
+      "duplicate_count": 54917,
+      "import_id": "0e26beb4-7a67-5b9b-bcfe-8b80edc51643",
+      "replayed": true,
+      "source_row_count": 54917
+    },
+    "schema_version": 1
+  },
+  "schema_version": "1.0",
+  "scope_note": "P1 verifies application plumbing with deterministic synthetic data; it does not validate vendor semantics, operational thresholds, or field performance.",
+  "work_package": "pilot_preparation_p1"
+}

@@ -5,8 +5,9 @@ starts with a deliberately small vertical slice and preserves the same
 interfaces when simulated devices are replaced by real meters.
 
 The technical design, experiment sequence, and findings are documented in
-[`report/main.tex`](report/main.tex). Iterations A through E are implemented as
-reproducible, end-to-end vertical slices.
+[`report/main.tex`](report/main.tex). Experiments 0 through 5 are implemented as
+reproducible, end-to-end vertical slices. The post-simulation product path is
+defined in [`docs/pilot_preparation_plan.md`](docs/pilot_preparation_plan.md).
 
 ## Experiment 0
 
@@ -143,6 +144,9 @@ Run the adapter experiment with:
 python scripts/run_experiment_5.py \
   --config config/experiment_5.json \
   --output results/experiment_5
+python scripts/run_pilot_p1.py \
+  --config config/pilot_p1.json \
+  --output results/pilot_p1
 ```
 
 The semicolon-delimited source fixture uses German column names, local
@@ -150,3 +154,23 @@ Europe/Vienna timestamps, decimal-comma litre registers, and vendor quality
 codes. `scripts/build_experiment_5_fixture.py` documents its controlled
 provenance; the experiment runner consumes only the frozen CSV and does not
 invoke any simulator.
+
+## Pilot Preparation P1
+
+P1 turns the experiment interfaces into a persistent application backend. A
+seeded generator creates a 30-day portfolio with six buildings, 72 apartments,
+78 meters, and realistic missing/suspect readings. The runner loads that
+portfolio into a versioned SQLite schema, replays the same import to verify
+idempotency, and freezes a representative API snapshot and summary.
+
+Start the read API after generating the P1 database:
+
+```bash
+python -m building_utility_twin.api \
+  --database results/pilot_p1/backend.sqlite3
+```
+
+Interactive OpenAPI documentation is then available at `/docs`. The backend
+exposes portfolio, building, meter, measurement, and import-history endpoints.
+This is application-plumbing evidence from deterministic synthetic data, not a
+field-data or operational-performance claim.
