@@ -51,6 +51,10 @@ jobs:
         run: |
           python scripts/run_pilot_p2.py --config config/pilot_p1.json --output /tmp/pilot_p2_a
           python scripts/run_pilot_p2.py --config config/pilot_p1.json --output /tmp/pilot_p2_b
+      - name: Regenerate Pilot P3
+        run: |
+          python scripts/run_pilot_p3.py --config config/pilot_p1.json --output /tmp/pilot_p3_a
+          python scripts/run_pilot_p3.py --config config/pilot_p1.json --output /tmp/pilot_p3_b
       - name: Verify byte-for-byte reproducibility
         run: |
           cmp /tmp/experiment_0_a/measurements.jsonl /tmp/experiment_0_b/measurements.jsonl
@@ -84,3 +88,5 @@ jobs:
           cmp /tmp/pilot_p1_a/summary.json /tmp/pilot_p1_b/summary.json
           cmp /tmp/pilot_p2_a/dashboard_snapshot.json /tmp/pilot_p2_b/dashboard_snapshot.json
           cmp /tmp/pilot_p2_a/summary.json /tmp/pilot_p2_b/summary.json
+          cmp /tmp/pilot_p3_a/analytics_snapshot.json /tmp/pilot_p3_b/analytics_snapshot.json
+          cmp /tmp/pilot_p3_a/summary.json /tmp/pilot_p3_b/summary.json

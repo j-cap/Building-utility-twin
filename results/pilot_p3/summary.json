@@ -1,0 +1,44 @@
+{
+  "acceptance": {
+    "checks": {
+      "all_fourteen_mechanisms_present": true,
+      "all_mechanisms_agree": true,
+      "analytics_api_complete": true,
+      "campaign_replay_is_idempotent": true,
+      "diagnostics_remain_research_only": true,
+      "evidence_levels_complete": true,
+      "expected_outcomes_complete": true,
+      "review_evidence_reaches_operator_queue": true,
+      "synthetic_campaign_makes_no_operational_claims": true
+    },
+    "passed": true
+  },
+  "campaign": {
+    "campaign_digest": "18c8237424bb3abe51164ba88721a60a455f34e32ca78fe0e6464bc1aaf37dcc",
+    "campaign_id": "41eb248c-5803-54df-828d-90ce19671684",
+    "evidence_count": 14,
+    "evidence_level_counts": {
+      "accounting_plausibility": 5,
+      "data_quality": 6,
+      "diagnostic_research": 3
+    },
+    "first_load_accepted": 14,
+    "mechanism_agreement_count": 14,
+    "operator_review_issue_count": 10,
+    "outcome_counts": {
+      "clear": 1,
+      "research_only": 3,
+      "review": 10
+    },
+    "replay_duplicate_count": 14
+  },
+  "configuration_digest": "bb83cce95f61a96e89617c9a1a9a39ec37835b09d5c6aead3fd38252d02e594b",
+  "interface": {
+    "api_endpoint_count": 13,
+    "operator_page_count": 6,
+    "snapshot_sha256": "941e84c117d0c411f7f9dc341efa3a1b5b03e0a487f14b91077375bf76eac0ec"
+  },
+  "schema_version": "1.0",
+  "scope_note": "P3 verifies analytics mechanisms with deterministic synthetic interventions. Threshold validity, false-alarm rates, forecast skill, and diagnostic attribution remain field-data questions.",
+  "work_package": "pilot_preparation_p3"
+}
