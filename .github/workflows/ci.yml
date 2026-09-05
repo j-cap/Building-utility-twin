@@ -33,6 +33,10 @@ jobs:
         run: |
           python scripts/run_experiment_3.py --config config/experiment_3.json --output /tmp/experiment_3_a
           python scripts/run_experiment_3.py --config config/experiment_3.json --output /tmp/experiment_3_b
+      - name: Regenerate Experiment 4
+        run: |
+          python scripts/run_experiment_4.py --config config/experiment_4.json --output /tmp/experiment_4_a
+          python scripts/run_experiment_4.py --config config/experiment_4.json --output /tmp/experiment_4_b
       - name: Verify byte-for-byte reproducibility
         run: |
           cmp /tmp/experiment_0_a/measurements.jsonl /tmp/experiment_0_b/measurements.jsonl
@@ -51,3 +55,9 @@ jobs:
           cmp /tmp/experiment_3_a/apartments.csv /tmp/experiment_3_b/apartments.csv
           cmp /tmp/experiment_3_a/events.csv /tmp/experiment_3_b/events.csv
           cmp /tmp/experiment_3_a/summary.json /tmp/experiment_3_b/summary.json
+          cmp /tmp/experiment_4_a/measurements.jsonl /tmp/experiment_4_b/measurements.jsonl
+          cmp /tmp/experiment_4_a/telemetry.csv /tmp/experiment_4_b/telemetry.csv
+          cmp /tmp/experiment_4_a/water_balance.csv /tmp/experiment_4_b/water_balance.csv
+          cmp /tmp/experiment_4_a/thermal_balance.csv /tmp/experiment_4_b/thermal_balance.csv
+          cmp /tmp/experiment_4_a/alarms.csv /tmp/experiment_4_b/alarms.csv
+          cmp /tmp/experiment_4_a/summary.json /tmp/experiment_4_b/summary.json

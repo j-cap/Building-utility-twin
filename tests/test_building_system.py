@@ -100,6 +100,22 @@ class MultiApartmentAggregationTests(unittest.TestCase):
                 apartments=(self.config.apartments[0], duplicate),
             )
 
+    def test_standing_loss_multiplier_validation_and_nominal_equivalence(self) -> None:
+        interval_count = len(self.result.total_flow_m3_s)
+        nominal = simulate_building(
+            self.config, standing_loss_multipliers=(1.0,) * interval_count
+        )
+        self.assertEqual(nominal, self.result)
+        with self.assertRaisesRegex(ValueError, "match"):
+            simulate_building(
+                self.config, standing_loss_multipliers=(1.0,) * 2
+            )
+        with self.assertRaisesRegex(ValueError, "non-negative"):
+            simulate_building(
+                self.config,
+                standing_loss_multipliers=(-1.0,) * interval_count,
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

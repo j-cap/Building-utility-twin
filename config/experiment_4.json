@@ -1,0 +1,42 @@
+{
+  "experiment_id": "iteration_e_experiment_4",
+  "building_config": "experiment_3.json",
+  "telemetry": {
+    "readout_interval_seconds": 300,
+    "register_resolution_l": 0.1,
+    "increment_noise_std_fraction": 0.005,
+    "register_modulus_l": 200.0,
+    "packet_loss_probability": 0.08,
+    "max_packet_delay_seconds": 600,
+    "reset_offsets_seconds": [
+      46800
+    ],
+    "seed": 20260909,
+    "rollover_drop_threshold_fraction": 0.25
+  },
+  "water_leak": {
+    "start_offset_seconds": 10800,
+    "end_offset_seconds": 25200,
+    "flow_l_min": 0.30
+  },
+  "meter_underregistration": {
+    "meter_id": "apartment-201",
+    "start_offset_seconds": 39600,
+    "end_offset_seconds": 54000,
+    "registration_fraction": 0.75
+  },
+  "excess_storage_loss": {
+    "start_offset_seconds": 64800,
+    "end_offset_seconds": 79200,
+    "loss_multiplier": 4.0
+  },
+  "analytics": {
+    "water_balance_alarm_l_min": 0.15,
+    "thermal_loss_alarm_w": 150.0,
+    "minimum_water_precision": 0.85,
+    "minimum_water_recall": 0.70,
+    "minimum_thermal_precision": 0.95,
+    "minimum_thermal_recall": 0.95,
+    "maximum_telemetry_reconstruction_error_l": 1.0
+  }
+}

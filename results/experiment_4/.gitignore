@@ -1,0 +1,7 @@
+# The runner regenerates these deterministic data and audit files.
+measurements.jsonl
+telemetry.csv
+water_balance.csv
+thermal_balance.csv
+alarms.csv
+

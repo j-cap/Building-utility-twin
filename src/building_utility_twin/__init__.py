@@ -1,5 +1,19 @@
 """Building Utility Twin core package."""
 
+from .anomaly_analytics import (
+    AnalyticsThresholds,
+    ExcessStorageLossConfig,
+    Experiment4Config,
+    Experiment4SimulationResult,
+    MeterChannelResult,
+    MeterUnderregistrationConfig,
+    OffsetWindow,
+    ThermalBalanceWindow,
+    WaterBalanceWindow,
+    WaterLeakConfig,
+    simulate_experiment_4,
+    simulate_meter_channel,
+)
 from .building_system import (
     ApartmentSimulation,
     ApartmentSpec,
@@ -33,10 +47,14 @@ from .telemetry import (
 )
 
 __all__ = [
+    "AnalyticsThresholds",
     "ExperimentConfig",
     "Experiment1Config",
     "Experiment2Config",
     "Experiment3Config",
+    "Experiment4Config",
+    "Experiment4SimulationResult",
+    "ExcessStorageLossConfig",
     "ApartmentSimulation",
     "ApartmentSpec",
     "BuildingSimulationResult",
@@ -47,6 +65,9 @@ __all__ = [
     "IdealCumulativeMeter",
     "Measurement",
     "MeterObservation",
+    "MeterChannelResult",
+    "MeterUnderregistrationConfig",
+    "OffsetWindow",
     "Quality",
     "Quantity",
     "ReconciledReading",
@@ -56,10 +77,15 @@ __all__ = [
     "ThermalSimulationResult",
     "TelemetryFaultConfig",
     "TelemetrySimulationResult",
+    "ThermalBalanceWindow",
+    "WaterBalanceWindow",
+    "WaterLeakConfig",
     "generate_fixture_demand",
     "reconcile_observations",
     "simulate_imperfect_telemetry",
     "simulate_building",
     "simulate_domestic_hot_water",
+    "simulate_experiment_4",
+    "simulate_meter_channel",
     "simulate_one_pipe_day",
 ]
