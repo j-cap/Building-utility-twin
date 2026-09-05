@@ -2,7 +2,7 @@
 \usepackage[margin=25mm]{geometry}
 \usepackage{amsmath,amssymb,booktabs,graphicx,hyperref,placeins}
 \usepackage{xcolor}
-\graphicspath{{../results/experiment_0/}{../results/experiment_1/}{../results/experiment_2/}{../results/experiment_3/}{../results/experiment_4/}{../results/experiment_5/}{../results/pilot_p1/}{../results/pilot_p2/}}
+\graphicspath{{../results/experiment_0/}{../results/experiment_1/}{../results/experiment_2/}{../results/experiment_3/}{../results/experiment_4/}{../results/experiment_5/}{../results/pilot_p1/}{../results/pilot_p2/}{../results/pilot_p3/}}
 \hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue}
 
 \title{Building Utility Twin\\\large Simulation Framework, Experiments, and Pilot Preparation}
@@ -1193,12 +1193,157 @@ testing with representative users. Those omissions remain explicit inputs to
 P3 and P5 rather than hidden assumptions.
 
 \FloatBarrier
+\section{Pilot preparation P3: analytics test bench}
+P3 asks whether analytics with materially different evidential meanings can
+share one persistence and interface boundary without implying the same level of
+confidence. The implementation defines three explicit levels. Data-quality
+evidence describes the integrity and timing of observations. Accounting and
+plausibility evidence describes balances, completeness, and behavior that
+merits investigation. Diagnostic-research evidence contains hypotheses or
+model outputs that cannot be promoted to a diagnosis from this campaign.
+
+\subsection{Evidence contract and campaign design}
+Every analytic result has a deterministic evidence identifier, campaign and
+analytic identifiers, evidence level, observed values, test thresholds,
+provenance, expected and actual outcomes, interpretation, and an explicit
+operational-claim permission. The possible outcomes are \texttt{clear},
+\texttt{review}, and \texttt{research\_only}. The contract rejects a diagnostic-
+research record unless its outcome is \texttt{research\_only}; it also rejects
+any attempt to attach an operational claim to such a synthetic result.
+
+The reference campaign covers the 14 mechanisms in the P3 plan. The six
+data-quality cases independently inject one missing interval, a stale tail, one
+duplicate row, one conflicting value, one register reversal, and a 15-minute
+cadence shift into a complete reference register. The accounting and
+plausibility cases calculate period consumption and inject an incomplete meter
+topology, an unexplained 500 L building-register component, four persistent
+night-flow windows, and 100 kWh of unaccounted thermal energy. The three
+diagnostic cases retain two observationally equivalent causes for one water-
+balance residual, fit a mean hourly consumption forecast, and fit an hourly
+standardized anomaly score.
+
+The interventions and thresholds are deliberately simple and visible. They
+make each mechanism falsifiable in automated tests. They do not represent
+estimated field prevalence, uncertainty, costs, or useful operating limits.
+Table~\ref{tab:p3-levels} records the interface meaning of each level.
+
+\begin{table}[htbp]
+  \centering
+  \caption{P3 evidence levels and permitted operator interpretation.}
+  \label{tab:p3-levels}
+  \begin{tabular}{p{0.30\linewidth}p{0.38\linewidth}p{0.20\linewidth}}
+    \toprule
+    Evidence level & Reference mechanisms & Permitted use \\
+    \midrule
+    Data quality & Integrity and timing checks & Clear or review \\
+    Accounting / plausibility & Consumption and balances &
+      Clear or review \\
+    Diagnostic research & Attribution and fitted models & Research only \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Persistence and operator boundary}
+P3 adds idempotent campaign and evidence tables to backend schema version~2.
+The first store accepts every evidence record. Replaying the same campaign
+accepts none and reports every record as already present. Two new API routes
+provide the campaign summary and filterable evidence, bringing the application
+to 13 routes. A sixth dashboard page exposes coverage, outcomes, measured
+values, and test thresholds.
+
+The existing P2 review queue remains the action boundary. Only \texttt{review}
+outcomes from data quality or accounting and plausibility are linked to an
+operator issue. Clear results are retained as evidence but create no work.
+Diagnostic-research records never enter the queue. The review view now handles
+both the original completeness evidence and the richer P3 evidence without
+changing status and note persistence.
+
+\section{Pilot P3 results}
+All 14 mechanisms produce their expected disposition. The evidence split is
+six data-quality records, five accounting and plausibility records, and three
+diagnostic-research records. The resulting outcomes are one clear, ten review,
+and three research-only records. All ten review records, and only those
+records, appear in the operator queue. The campaign makes zero operational
+claims. Table~\ref{tab:p3-results} summarizes the frozen result.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Pilot-preparation P3 analytics-test-bench results.}
+  \label{tab:p3-results}
+  \begin{tabular}{lr}
+    \toprule
+    Metric & Result \\
+    \midrule
+    Analytics mechanisms & 14 \\
+    Data quality / accounting / diagnostic & 6 / 5 / 3 \\
+    Clear / review / research-only outcomes & 1 / 10 / 3 \\
+    Expected mechanism agreement & 14 / 14 \\
+    Operator issues created from P3 evidence & 10 \\
+    First-load accepted / replay duplicate & 14 / 14 \\
+    Dashboard pages / API routes & 6 / 13 \\
+    Operational claims from synthetic campaign & 0 \\
+    Reproducible snapshot / acceptance & yes / pass \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The data-quality interventions are isolated by construction. The missing,
+duplicate, conflict, and reversal cases each expose one target event. The stale
+case ends 7200 s before the analysis boundary, above the 5400 s test threshold.
+Shifting one boundary by 15 minutes creates the expected two off-cadence
+intervals.
+
+The unmodified water-accounting endpoints retain a baseline residual of
+$-0.0002\,\mathrm{L}$. Adding the 500 L intervention produces a
+$499.9998\,\mathrm{L}$ residual and crosses the explicit 250 L test threshold.
+Four night windows at $120\,\mathrm{L\,h^{-1}}$ cross the
+$60\,\mathrm{L\,h^{-1}}$ threshold with three required consecutive windows.
+The thermal case exposes 100 kWh of unaccounted energy against a 25 kWh test
+threshold.
+
+The mean-hour forecast uses 472 complete hourly training intervals and 236
+synthetic holdout intervals. Its mean absolute error is
+$13.076866\,\mathrm{L\,h^{-1}}$. The fitted hourly anomaly score ranks a 1000 L
+injected hourly spike at 223.09, while the maximum ordinary synthetic holdout
+score is 2.94. These values verify deterministic fitting, scoring, and holdout
+separation for this intervention. They do not establish forecast skill or an
+alarm operating point. The attribution case is more fundamental: the same
+500 L residual is compatible with an unmetered leak or meter over-registration,
+so the confirmed-cause count remains zero.
+
+\FloatBarrier
+Figure~\ref{fig:p3} shows the full campaign as it appears at the analytics
+boundary. Amber records require review, green is a clear accounting result,
+and purple denotes research that cannot be promoted to an operational claim.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.98\linewidth]{pilot_p3_analytics_test_bench.png}
+  \caption{Pilot P3 analytics test bench. The 14 synthetic cases agree with
+  their expected software disposition while producing zero operational claims.}
+  \label{fig:p3}
+\end{figure}
+
+The P3 result is a separation and integration result, not an accuracy result.
+It demonstrates that evidence meaning survives computation, persistence, API
+transport, operator presentation, and queue promotion. Two full independent
+runs produce byte-identical analytics snapshots and summaries. Six new tests
+raise the complete suite to 55 tests and cover the evidence contract,
+determinism, persistence, idempotency, filtering, API validation, queue linkage,
+and end-to-end reproducibility.
+
+P3 does not validate useful thresholds, false-positive or false-negative rates,
+seasonal forecast performance, uncertainty calibration, or diagnostic
+attribution. The strongest finding is therefore the enforced boundary: even a
+large synthetic score remains research-only until a separately selected
+baseline and held-out physical data support an operational interpretation.
+
+\FloatBarrier
 \section{Planned extensions}
-P3 will separate data-quality checks, accounting and plausibility measures, and
-diagnostic research into explicit evidence levels. It should use the P2 review
-queue as the presentation boundary while keeping threshold selection and
-diagnostic claims in a test bench. P4 will generalize the vendor-adapter toolkit,
-and P5 will package the demonstrator with operational safeguards.
+P4 will generalize the Experiment~5 vendor-adapter toolkit into declarative
+mappings, import preview, conformance tests, version recognition, templates,
+and a scaffold for new vendors. P5 will package the demonstrator with
+operational safeguards.
 
 Experiment~6 begins only when a real source is available. It should process an
 unmodified, de-identified physical meter export and record its format version,

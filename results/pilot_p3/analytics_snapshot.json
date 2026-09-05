@@ -1,0 +1,849 @@
+{
+  "dashboard_contract_version": "1.1",
+  "evidence": [
+    {
+      "analytic_id": "building_apartment_balance",
+      "building_id": "building-001",
+      "campaign_id": "41eb248c-5803-54df-828d-90ce19671684",
+      "evidence_id": "ceadb452-dbdd-5c83-96a1-0a5855d38c7c",
+      "evidence_level": "accounting_plausibility",
+      "expected_outcome": "review",
+      "interpretation": "The injected residual exceeds the test threshold. It is balance evidence and does not identify a leak or a faulty meter.",
+      "mechanism_agrees": true,
+      "meter_id": null,
+      "observed": {
+        "baseline_residual_l": -0.0002,
+        "injected_component_l": 500.0,
+        "injected_residual_l": 499.9998
+      },
+      "operational_claim_allowed": false,
+      "outcome": "review",
+      "provenance": {
+        "field_validation_required": true,
+        "intervention": "add_500_l_unexplained_building_register",
+        "portfolio_digest": "bb83cce95f61a96e89617c9a1a9a39ec37835b09d5c6aead3fd38252d02e594b",
+        "reference_register": "complete_linearized_register_with_observed_endpoints",
+        "source": "deterministic_synthetic_campaign",
+        "synthetic_intervention": true
+      },
+      "thresholds": {
+        "absolute_residual_review_l": 250.0
+      },
+      "title": "Building/apartment balance residual"
+    },
+    {
+      "analytic_id": "period_consumption",
+      "building_id": "building-001",
+      "campaign_id": "41eb248c-5803-54df-828d-90ce19671684",
+      "evidence_id": "3c8f436c-c33d-5fad-b0f4-32b65aace474",
+      "evidence_level": "accounting_plausibility",
+      "expected_outcome": "clear",
+      "interpretation": "End-minus-start register consumption is finite and non-negative.",
+      "mechanism_agrees": true,
+      "meter_id": "meter-001-001",
+      "observed": {
+        "period_consumption_l": 3653.0857
+      },
+      "operational_claim_allowed": false,
+      "outcome": "clear",
+      "provenance": {
+        "field_validation_required": true,
+        "intervention": "none",
+        "portfolio_digest": "bb83cce95f61a96e89617c9a1a9a39ec37835b09d5c6aead3fd38252d02e594b",
+        "reference_register": "complete_linearized_register_with_observed_endpoints",
+        "source": "deterministic_synthetic_campaign",
+        "synthetic_intervention": true
+      },
+      "thresholds": {
+        "minimum_consumption_l": 0.0
+      },
+      "title": "Period consumption"
+    },
+    {
+      "analytic_id": "persistent_night_flow",
+      "building_id": "building-001",
+      "campaign_id": "41eb248c-5803-54df-828d-90ce19671684",
+      "evidence_id": "29d3eec3-c806-5671-b875-4b42448a05f0",
+      "evidence_level": "accounting_plausibility",
+      "expected_outcome": "review",
+      "interpretation": "Four synthetic night windows exceed the test threshold. Persistence is plausibility evidence, not proof of leakage.",
+      "mechanism_agrees": true,
+      "meter_id": null,
+      "observed": {
+        "consecutive_windows_above_threshold": 4,
+        "minimum_injected_night_flow_l_per_hour": 120.0,
+        "night_window_count": 4
+      },
+      "operational_claim_allowed": false,
+      "outcome": "review",
+      "provenance": {
+        "field_validation_required": true,
+        "intervention": "four_constant_night_flow_windows",
+        "portfolio_digest": "bb83cce95f61a96e89617c9a1a9a39ec37835b09d5c6aead3fd38252d02e594b",
+        "reference_register": "complete_linearized_register_with_observed_endpoints",
+        "source": "deterministic_synthetic_campaign",
+        "synthetic_intervention": true
+      },
+      "thresholds": {
+        "flow_review_l_per_hour": 60.0,
+        "required_consecutive_windows": 3
+      },
+      "title": "Persistent night flow"
+    },
+    {
+      "analytic_id": "thermal_balance",
+      "building_id": "building-001",
+      "campaign_id": "41eb248c-5803-54df-828d-90ce19671684",
+      "evidence_id": "e91be56e-32c8-509b-8229-bcd15b17c50e",
+      "evidence_level": "accounting_plausibility",
+      "expected_outcome": "review",
+      "interpretation": "The synthetic energy residual exceeds the test threshold. Calibration, boundary definitions, and field uncertainty remain unvalidated.",
+      "mechanism_agrees": true,
+      "meter_id": null,
+      "observed": {
+        "storage_change_kwh": 80.0,
+        "thermal_draw_kwh": 820.0,
+        "thermal_input_kwh": 1000.0,
+        "unaccounted_thermal_energy_kwh": 100.0
+      },
+      "operational_claim_allowed": false,
+      "outcome": "review",
+      "provenance": {
+        "field_validation_required": true,
+        "intervention": "add_100_kwh_unaccounted_energy",
+        "portfolio_digest": "bb83cce95f61a96e89617c9a1a9a39ec37835b09d5c6aead3fd38252d02e594b",
+        "reference_register": "complete_linearized_register_with_observed_endpoints",
+        "source": "deterministic_synthetic_campaign",
+        "synthetic_intervention": true
+      },
+      "thresholds": {
+        "absolute_residual_review_kwh": 25.0
+      },
+      "title": "Thermal balance residual"
+    },
+    {
+      "analytic_id": "topology_completeness",
+      "building_id": "building-001",
+      "campaign_id": "41eb248c-5803-54df-828d-90ce19671684",
+      "evidence_id": "6118ca29-f811-5452-8f9f-3feb0b293b0c",
+      "evidence_level": "accounting_plausibility",
+      "expected_outcome": "review",
+      "interpretation": "One synthetic apartment meter is absent from the accounting scope.",
+      "mechanism_agrees": true,
+      "meter_id": null,
+      "observed": {
+        "expected_apartment_meter_count": 12,
+        "missing_apartment_meter_count": 1,
+        "observed_apartment_meter_count": 11
+      },
+      "operational_claim_allowed": false,
+      "outcome": "review",
+      "provenance": {
+        "field_validation_required": true,
+        "intervention": "remove_one_apartment_meter",
+        "portfolio_digest": "bb83cce95f61a96e89617c9a1a9a39ec37835b09d5c6aead3fd38252d02e594b",
+        "reference_register": "complete_linearized_register_with_observed_endpoints",
+        "source": "deterministic_synthetic_campaign",
+        "synthetic_intervention": true
+      },
+      "thresholds": {
+        "required_completeness_percent": 100.0
+      },
+      "title": "Incomplete accounting topology"
+    },
+    {
+      "analytic_id": "conflicting_readings",
+      "building_id": "building-001",
+      "campaign_id": "41eb248c-5803-54df-828d-90ce19671684",
+      "evidence_id": "0100f502-878c-5927-84ec-3e69b9a8958a",
+      "evidence_level": "data_quality",
+      "expected_outcome": "review",
+      "interpretation": "The injected data defect is exposed as review evidence. The test verifies detector mechanics, not a field-calibrated alarm rate.",
+      "mechanism_agrees": true,
+      "meter_id": "meter-001-001",
+      "observed": {
+        "conflicting_timestamp_count": 1,
+        "duplicate_reading_count": 0,
+        "missing_interval_count": 0,
+        "non_monotonic_step_count": 0,
+        "reading_count": 722,
+        "stale": false,
+        "staleness_seconds": 0.0,
+        "target_metric": "conflicting_timestamp_count",
+        "target_value": 1,
+        "unexpected_interval_count": 0
+      },
+      "operational_claim_allowed": false,
+      "outcome": "review",
+      "provenance": {
+        "field_validation_required": true,
+        "intervention": "conflicting_readings",
+        "portfolio_digest": "bb83cce95f61a96e89617c9a1a9a39ec37835b09d5c6aead3fd38252d02e594b",
+        "reference_register": "complete_linearized_register_with_observed_endpoints",
+        "source": "deterministic_synthetic_campaign",
+        "synthetic_intervention": true
+      },
+      "thresholds": {
+        "expected_interval_seconds": 3600,
+        "review_when_target_nonzero": true,
+        "stale_after_seconds": 5400
+      },
+      "title": "Conflicting value"
+    },
+    {
+      "analytic_id": "duplicate_readings",
+      "building_id": "building-001",
+      "campaign_id": "41eb248c-5803-54df-828d-90ce19671684",
+      "evidence_id": "fa64e7fe-b2eb-5ea2-992c-f1ffe93320f1",
+      "evidence_level": "data_quality",
+      "expected_outcome": "review",
+      "interpretation": "The injected data defect is exposed as review evidence. The test verifies detector mechanics, not a field-calibrated alarm rate.",
+      "mechanism_agrees": true,
+      "meter_id": "meter-001-001",
+      "observed": {
+        "conflicting_timestamp_count": 0,
+        "duplicate_reading_count": 1,
+        "missing_interval_count": 0,
+        "non_monotonic_step_count": 0,
+        "reading_count": 722,
+        "stale": false,
+        "staleness_seconds": 0.0,
+        "target_metric": "duplicate_reading_count",
+        "target_value": 1,
+        "unexpected_interval_count": 0
+      },
+      "operational_claim_allowed": false,
+      "outcome": "review",
+      "provenance": {
+        "field_validation_required": true,
+        "intervention": "duplicate_readings",
+        "portfolio_digest": "bb83cce95f61a96e89617c9a1a9a39ec37835b09d5c6aead3fd38252d02e594b",
+        "reference_register": "complete_linearized_register_with_observed_endpoints",
+        "source": "deterministic_synthetic_campaign",
+        "synthetic_intervention": true
+      },
+      "thresholds": {
+        "expected_interval_seconds": 3600,
+        "review_when_target_nonzero": true,
+        "stale_after_seconds": 5400
+      },
+      "title": "Duplicate row"
+    },
+    {
+      "analytic_id": "missing_readings",
+      "building_id": "building-001",
+      "campaign_id": "41eb248c-5803-54df-828d-90ce19671684",
+      "evidence_id": "b61894ef-a6c5-5fdd-88ea-6a39726d7ba6",
+      "evidence_level": "data_quality",
+      "expected_outcome": "review",
+      "interpretation": "The injected data defect is exposed as review evidence. The test verifies detector mechanics, not a field-calibrated alarm rate.",
+      "mechanism_agrees": true,
+      "meter_id": "meter-001-001",
+      "observed": {
+        "conflicting_timestamp_count": 0,
+        "duplicate_reading_count": 0,
+        "missing_interval_count": 1,
+        "non_monotonic_step_count": 0,
+        "reading_count": 720,
+        "stale": false,
+        "staleness_seconds": 0.0,
+        "target_metric": "missing_interval_count",
+        "target_value": 1,
+        "unexpected_interval_count": 1
+      },
+      "operational_claim_allowed": false,
+      "outcome": "review",
+      "provenance": {
+        "field_validation_required": true,
+        "intervention": "missing_readings",
+        "portfolio_digest": "bb83cce95f61a96e89617c9a1a9a39ec37835b09d5c6aead3fd38252d02e594b",
+        "reference_register": "complete_linearized_register_with_observed_endpoints",
+        "source": "deterministic_synthetic_campaign",
+        "synthetic_intervention": true
+      },
+      "thresholds": {
+        "expected_interval_seconds": 3600,
+        "review_when_target_nonzero": true,
+        "stale_after_seconds": 5400
+      },
+      "title": "Missing boundary"
+    },
+    {
+      "analytic_id": "non_monotonic_register",
+      "building_id": "building-001",
+      "campaign_id": "41eb248c-5803-54df-828d-90ce19671684",
+      "evidence_id": "ba08b74c-e670-58a4-b465-601211587877",
+      "evidence_level": "data_quality",
+      "expected_outcome": "review",
+      "interpretation": "The injected data defect is exposed as review evidence. The test verifies detector mechanics, not a field-calibrated alarm rate.",
+      "mechanism_agrees": true,
+      "meter_id": "meter-001-001",
+      "observed": {
+        "conflicting_timestamp_count": 0,
+        "duplicate_reading_count": 0,
+        "missing_interval_count": 0,
+        "non_monotonic_step_count": 1,
+        "reading_count": 721,
+        "stale": false,
+        "staleness_seconds": 0.0,
+        "target_metric": "non_monotonic_step_count",
+        "target_value": 1,
+        "unexpected_interval_count": 0
+      },
+      "operational_claim_allowed": false,
+      "outcome": "review",
+      "provenance": {
+        "field_validation_required": true,
+        "intervention": "non_monotonic_register",
+        "portfolio_digest": "bb83cce95f61a96e89617c9a1a9a39ec37835b09d5c6aead3fd38252d02e594b",
+        "reference_register": "complete_linearized_register_with_observed_endpoints",
+        "source": "deterministic_synthetic_campaign",
+        "synthetic_intervention": true
+      },
+      "thresholds": {
+        "expected_interval_seconds": 3600,
+        "review_when_target_nonzero": true,
+        "stale_after_seconds": 5400
+      },
+      "title": "Register reversal"
+    },
+    {
+      "analytic_id": "stale_readings",
+      "building_id": "building-001",
+      "campaign_id": "41eb248c-5803-54df-828d-90ce19671684",
+      "evidence_id": "aa394a8d-2df9-55bf-a627-8ec3e188d1e9",
+      "evidence_level": "data_quality",
+      "expected_outcome": "review",
+      "interpretation": "The injected data defect is exposed as review evidence. The test verifies detector mechanics, not a field-calibrated alarm rate.",
+      "mechanism_agrees": true,
+      "meter_id": "meter-001-001",
+      "observed": {
+        "conflicting_timestamp_count": 0,
+        "duplicate_reading_count": 0,
+        "missing_interval_count": 0,
+        "non_monotonic_step_count": 0,
+        "reading_count": 719,
+        "stale": true,
+        "staleness_seconds": 7200.0,
+        "target_metric": "stale",
+        "target_value": true,
+        "unexpected_interval_count": 0
+      },
+      "operational_claim_allowed": false,
+      "outcome": "review",
+      "provenance": {
+        "field_validation_required": true,
+        "intervention": "stale_readings",
+        "portfolio_digest": "bb83cce95f61a96e89617c9a1a9a39ec37835b09d5c6aead3fd38252d02e594b",
+        "reference_register": "complete_linearized_register_with_observed_endpoints",
+        "source": "deterministic_synthetic_campaign",
+        "synthetic_intervention": true
+      },
+      "thresholds": {
+        "expected_interval_seconds": 3600,
+        "review_when_target_nonzero": true,
+        "stale_after_seconds": 5400
+      },
+      "title": "Stale tail"
+    },
+    {
+      "analytic_id": "unexpected_sampling",
+      "building_id": "building-001",
+      "campaign_id": "41eb248c-5803-54df-828d-90ce19671684",
+      "evidence_id": "25c123f6-a9d0-5270-b851-9bb3eaf9da81",
+      "evidence_level": "data_quality",
+      "expected_outcome": "review",
+      "interpretation": "The injected data defect is exposed as review evidence. The test verifies detector mechanics, not a field-calibrated alarm rate.",
+      "mechanism_agrees": true,
+      "meter_id": "meter-001-001",
+      "observed": {
+        "conflicting_timestamp_count": 0,
+        "duplicate_reading_count": 0,
+        "missing_interval_count": 0,
+        "non_monotonic_step_count": 0,
+        "reading_count": 721,
+        "stale": false,
+        "staleness_seconds": 0.0,
+        "target_metric": "unexpected_interval_count",
+        "target_value": 2,
+        "unexpected_interval_count": 2
+      },
+      "operational_claim_allowed": false,
+      "outcome": "review",
+      "provenance": {
+        "field_validation_required": true,
+        "intervention": "unexpected_sampling",
+        "portfolio_digest": "bb83cce95f61a96e89617c9a1a9a39ec37835b09d5c6aead3fd38252d02e594b",
+        "reference_register": "complete_linearized_register_with_observed_endpoints",
+        "source": "deterministic_synthetic_campaign",
+        "synthetic_intervention": true
+      },
+      "thresholds": {
+        "expected_interval_seconds": 3600,
+        "review_when_target_nonzero": true,
+        "stale_after_seconds": 5400
+      },
+      "title": "Cadence shift"
+    },
+    {
+      "analytic_id": "forecasting",
+      "building_id": "building-001",
+      "campaign_id": "41eb248c-5803-54df-828d-90ce19671684",
+      "evidence_id": "ef3a3e46-def5-55f8-be55-f6f5b64ad4f0",
+      "evidence_level": "diagnostic_research",
+      "expected_outcome": "research_only",
+      "interpretation": "A deterministic hourly-profile model produces a finite synthetic holdout error. It is a software benchmark, not a deployable forecast claim.",
+      "mechanism_agrees": true,
+      "meter_id": null,
+      "observed": {
+        "holdout_interval_count": 236,
+        "holdout_mae_l_per_hour": 13.076866,
+        "training_interval_count": 472
+      },
+      "operational_claim_allowed": false,
+      "outcome": "research_only",
+      "provenance": {
+        "field_validation_required": true,
+        "intervention": "none",
+        "model": "mean_consumption_by_hour",
+        "portfolio_digest": "bb83cce95f61a96e89617c9a1a9a39ec37835b09d5c6aead3fd38252d02e594b",
+        "reference_register": "complete_linearized_register_with_observed_endpoints",
+        "source": "deterministic_synthetic_campaign",
+        "synthetic_intervention": true
+      },
+      "thresholds": {
+        "promotion_gate": "held_out_field_baseline_comparison"
+      },
+      "title": "Hourly-profile forecast"
+    },
+    {
+      "analytic_id": "leak_or_meter_fault_attribution",
+      "building_id": "building-001",
+      "campaign_id": "41eb248c-5803-54df-828d-90ce19671684",
+      "evidence_id": "969e7c97-2e7e-5241-9f3d-45a3fc8f7ef8",
+      "evidence_level": "diagnostic_research",
+      "expected_outcome": "research_only",
+      "interpretation": "A 500 L balance residual is observationally compatible with both an unmetered leak and building-meter over-registration. The cause remains unidentified without independent evidence.",
+      "mechanism_agrees": true,
+      "meter_id": null,
+      "observed": {
+        "balance_residual_l": 500.0,
+        "confirmed_cause_count": 0,
+        "observationally_equivalent_hypothesis_count": 2
+      },
+      "operational_claim_allowed": false,
+      "outcome": "research_only",
+      "provenance": {
+        "field_validation_required": true,
+        "intervention": "equivalent_leak_and_meter_bias_hypotheses",
+        "portfolio_digest": "bb83cce95f61a96e89617c9a1a9a39ec37835b09d5c6aead3fd38252d02e594b",
+        "reference_register": "complete_linearized_register_with_observed_endpoints",
+        "source": "deterministic_synthetic_campaign",
+        "synthetic_intervention": true
+      },
+      "thresholds": {
+        "promotion_gate": "independent_field_evidence"
+      },
+      "title": "Leak versus meter-fault attribution"
+    },
+    {
+      "analytic_id": "learned_anomaly_score",
+      "building_id": "building-001",
+      "campaign_id": "41eb248c-5803-54df-828d-90ce19671684",
+      "evidence_id": "ba08ae97-24de-5133-97b3-e83526990b87",
+      "evidence_level": "diagnostic_research",
+      "expected_outcome": "research_only",
+      "interpretation": "The fitted hourly baseline ranks an injected spike above the ordinary synthetic holdout. Field prevalence and score calibration are unknown.",
+      "mechanism_agrees": true,
+      "meter_id": null,
+      "observed": {
+        "injected_ranked_above_holdout": true,
+        "injected_spike_l": 1000.0,
+        "injected_spike_score": 223.089711,
+        "ordinary_holdout_max_score": 2.942102
+      },
+      "operational_claim_allowed": false,
+      "outcome": "research_only",
+      "provenance": {
+        "field_validation_required": true,
+        "intervention": "add_1000_l_hourly_spike",
+        "model": "hourly_z_score",
+        "portfolio_digest": "bb83cce95f61a96e89617c9a1a9a39ec37835b09d5c6aead3fd38252d02e594b",
+        "reference_register": "complete_linearized_register_with_observed_endpoints",
+        "source": "deterministic_synthetic_campaign",
+        "synthetic_intervention": true
+      },
+      "thresholds": {
+        "promotion_gate": "held_out_field_precision_recall"
+      },
+      "title": "Learned hourly anomaly score"
+    }
+  ],
+  "operator_review_items": [
+    {
+      "building_id": "building-001",
+      "category": "analytics",
+      "description": "One synthetic apartment meter is absent from the accounting scope.",
+      "detected_at_utc": "2026-01-31T00:00:00Z",
+      "evidence": {
+        "analytic_id": "topology_completeness",
+        "analytics_evidence_id": "6118ca29-f811-5452-8f9f-3feb0b293b0c",
+        "campaign_id": "41eb248c-5803-54df-828d-90ce19671684",
+        "classification": "accounting_plausibility",
+        "observed": {
+          "expected_apartment_meter_count": 12,
+          "missing_apartment_meter_count": 1,
+          "observed_apartment_meter_count": 11
+        },
+        "operational_claim_allowed": false,
+        "thresholds": {
+          "required_completeness_percent": 100.0
+        }
+      },
+      "issue_id": "6ac709fe-04c0-511a-97fc-393cce2ad89f",
+      "meter_id": null,
+      "operator_note": "",
+      "portfolio_id": "synthetic-portfolio-001",
+      "severity": "warning",
+      "status": "open",
+      "title": "Incomplete accounting topology"
+    },
+    {
+      "building_id": "building-001",
+      "category": "analytics",
+      "description": "The injected residual exceeds the test threshold. It is balance evidence and does not identify a leak or a faulty meter.",
+      "detected_at_utc": "2026-01-31T00:00:00Z",
+      "evidence": {
+        "analytic_id": "building_apartment_balance",
+        "analytics_evidence_id": "ceadb452-dbdd-5c83-96a1-0a5855d38c7c",
+        "campaign_id": "41eb248c-5803-54df-828d-90ce19671684",
+        "classification": "accounting_plausibility",
+        "observed": {
+          "baseline_residual_l": -0.0002,
+          "injected_component_l": 500.0,
+          "injected_residual_l": 499.9998
+        },
+        "operational_claim_allowed": false,
+        "thresholds": {
+          "absolute_residual_review_l": 250.0
+        }
+      },
+      "issue_id": "03f7d2ad-2773-538b-a150-2448c13d70e7",
+      "meter_id": null,
+      "operator_note": "",
+      "portfolio_id": "synthetic-portfolio-001",
+      "severity": "warning",
+      "status": "open",
+      "title": "Building/apartment balance residual"
+    },
+    {
+      "building_id": "building-001",
+      "category": "analytics",
+      "description": "Four synthetic night windows exceed the test threshold. Persistence is plausibility evidence, not proof of leakage.",
+      "detected_at_utc": "2026-01-31T00:00:00Z",
+      "evidence": {
+        "analytic_id": "persistent_night_flow",
+        "analytics_evidence_id": "29d3eec3-c806-5671-b875-4b42448a05f0",
+        "campaign_id": "41eb248c-5803-54df-828d-90ce19671684",
+        "classification": "accounting_plausibility",
+        "observed": {
+          "consecutive_windows_above_threshold": 4,
+          "minimum_injected_night_flow_l_per_hour": 120.0,
+          "night_window_count": 4
+        },
+        "operational_claim_allowed": false,
+        "thresholds": {
+          "flow_review_l_per_hour": 60.0,
+          "required_consecutive_windows": 3
+        }
+      },
+      "issue_id": "ba4e9391-6a9e-5899-8500-312b54a00c76",
+      "meter_id": null,
+      "operator_note": "",
+      "portfolio_id": "synthetic-portfolio-001",
+      "severity": "warning",
+      "status": "open",
+      "title": "Persistent night flow"
+    },
+    {
+      "building_id": "building-001",
+      "category": "analytics",
+      "description": "The synthetic energy residual exceeds the test threshold. Calibration, boundary definitions, and field uncertainty remain unvalidated.",
+      "detected_at_utc": "2026-01-31T00:00:00Z",
+      "evidence": {
+        "analytic_id": "thermal_balance",
+        "analytics_evidence_id": "e91be56e-32c8-509b-8229-bcd15b17c50e",
+        "campaign_id": "41eb248c-5803-54df-828d-90ce19671684",
+        "classification": "accounting_plausibility",
+        "observed": {
+          "storage_change_kwh": 80.0,
+          "thermal_draw_kwh": 820.0,
+          "thermal_input_kwh": 1000.0,
+          "unaccounted_thermal_energy_kwh": 100.0
+        },
+        "operational_claim_allowed": false,
+        "thresholds": {
+          "absolute_residual_review_kwh": 25.0
+        }
+      },
+      "issue_id": "09665b4c-e5c2-54f9-83e4-cafe4364be8f",
+      "meter_id": null,
+      "operator_note": "",
+      "portfolio_id": "synthetic-portfolio-001",
+      "severity": "warning",
+      "status": "open",
+      "title": "Thermal balance residual"
+    },
+    {
+      "building_id": "building-001",
+      "category": "analytics",
+      "description": "The injected data defect is exposed as review evidence. The test verifies detector mechanics, not a field-calibrated alarm rate.",
+      "detected_at_utc": "2026-01-31T00:00:00Z",
+      "evidence": {
+        "analytic_id": "missing_readings",
+        "analytics_evidence_id": "b61894ef-a6c5-5fdd-88ea-6a39726d7ba6",
+        "campaign_id": "41eb248c-5803-54df-828d-90ce19671684",
+        "classification": "data_quality",
+        "observed": {
+          "conflicting_timestamp_count": 0,
+          "duplicate_reading_count": 0,
+          "missing_interval_count": 1,
+          "non_monotonic_step_count": 0,
+          "reading_count": 720,
+          "stale": false,
+          "staleness_seconds": 0.0,
+          "target_metric": "missing_interval_count",
+          "target_value": 1,
+          "unexpected_interval_count": 1
+        },
+        "operational_claim_allowed": false,
+        "thresholds": {
+          "expected_interval_seconds": 3600,
+          "review_when_target_nonzero": true,
+          "stale_after_seconds": 5400
+        }
+      },
+      "issue_id": "ae42f967-7848-5e16-b87b-bed0c8528b84",
+      "meter_id": "meter-001-001",
+      "operator_note": "",
+      "portfolio_id": "synthetic-portfolio-001",
+      "severity": "warning",
+      "status": "open",
+      "title": "Missing boundary"
+    },
+    {
+      "building_id": "building-001",
+      "category": "analytics",
+      "description": "The injected data defect is exposed as review evidence. The test verifies detector mechanics, not a field-calibrated alarm rate.",
+      "detected_at_utc": "2026-01-31T00:00:00Z",
+      "evidence": {
+        "analytic_id": "stale_readings",
+        "analytics_evidence_id": "aa394a8d-2df9-55bf-a627-8ec3e188d1e9",
+        "campaign_id": "41eb248c-5803-54df-828d-90ce19671684",
+        "classification": "data_quality",
+        "observed": {
+          "conflicting_timestamp_count": 0,
+          "duplicate_reading_count": 0,
+          "missing_interval_count": 0,
+          "non_monotonic_step_count": 0,
+          "reading_count": 719,
+          "stale": true,
+          "staleness_seconds": 7200.0,
+          "target_metric": "stale",
+          "target_value": true,
+          "unexpected_interval_count": 0
+        },
+        "operational_claim_allowed": false,
+        "thresholds": {
+          "expected_interval_seconds": 3600,
+          "review_when_target_nonzero": true,
+          "stale_after_seconds": 5400
+        }
+      },
+      "issue_id": "e7bff9a4-f3b4-5903-9a60-9e415f0ba38e",
+      "meter_id": "meter-001-001",
+      "operator_note": "",
+      "portfolio_id": "synthetic-portfolio-001",
+      "severity": "warning",
+      "status": "open",
+      "title": "Stale tail"
+    },
+    {
+      "building_id": "building-001",
+      "category": "analytics",
+      "description": "The injected data defect is exposed as review evidence. The test verifies detector mechanics, not a field-calibrated alarm rate.",
+      "detected_at_utc": "2026-01-31T00:00:00Z",
+      "evidence": {
+        "analytic_id": "duplicate_readings",
+        "analytics_evidence_id": "fa64e7fe-b2eb-5ea2-992c-f1ffe93320f1",
+        "campaign_id": "41eb248c-5803-54df-828d-90ce19671684",
+        "classification": "data_quality",
+        "observed": {
+          "conflicting_timestamp_count": 0,
+          "duplicate_reading_count": 1,
+          "missing_interval_count": 0,
+          "non_monotonic_step_count": 0,
+          "reading_count": 722,
+          "stale": false,
+          "staleness_seconds": 0.0,
+          "target_metric": "duplicate_reading_count",
+          "target_value": 1,
+          "unexpected_interval_count": 0
+        },
+        "operational_claim_allowed": false,
+        "thresholds": {
+          "expected_interval_seconds": 3600,
+          "review_when_target_nonzero": true,
+          "stale_after_seconds": 5400
+        }
+      },
+      "issue_id": "bb08572d-eed6-576c-aff2-c6c72ed41313",
+      "meter_id": "meter-001-001",
+      "operator_note": "",
+      "portfolio_id": "synthetic-portfolio-001",
+      "severity": "warning",
+      "status": "open",
+      "title": "Duplicate row"
+    },
+    {
+      "building_id": "building-001",
+      "category": "analytics",
+      "description": "The injected data defect is exposed as review evidence. The test verifies detector mechanics, not a field-calibrated alarm rate.",
+      "detected_at_utc": "2026-01-31T00:00:00Z",
+      "evidence": {
+        "analytic_id": "conflicting_readings",
+        "analytics_evidence_id": "0100f502-878c-5927-84ec-3e69b9a8958a",
+        "campaign_id": "41eb248c-5803-54df-828d-90ce19671684",
+        "classification": "data_quality",
+        "observed": {
+          "conflicting_timestamp_count": 1,
+          "duplicate_reading_count": 0,
+          "missing_interval_count": 0,
+          "non_monotonic_step_count": 0,
+          "reading_count": 722,
+          "stale": false,
+          "staleness_seconds": 0.0,
+          "target_metric": "conflicting_timestamp_count",
+          "target_value": 1,
+          "unexpected_interval_count": 0
+        },
+        "operational_claim_allowed": false,
+        "thresholds": {
+          "expected_interval_seconds": 3600,
+          "review_when_target_nonzero": true,
+          "stale_after_seconds": 5400
+        }
+      },
+      "issue_id": "534629fd-d171-58c9-8c69-47a35285fc0e",
+      "meter_id": "meter-001-001",
+      "operator_note": "",
+      "portfolio_id": "synthetic-portfolio-001",
+      "severity": "warning",
+      "status": "open",
+      "title": "Conflicting value"
+    },
+    {
+      "building_id": "building-001",
+      "category": "analytics",
+      "description": "The injected data defect is exposed as review evidence. The test verifies detector mechanics, not a field-calibrated alarm rate.",
+      "detected_at_utc": "2026-01-31T00:00:00Z",
+      "evidence": {
+        "analytic_id": "non_monotonic_register",
+        "analytics_evidence_id": "ba08b74c-e670-58a4-b465-601211587877",
+        "campaign_id": "41eb248c-5803-54df-828d-90ce19671684",
+        "classification": "data_quality",
+        "observed": {
+          "conflicting_timestamp_count": 0,
+          "duplicate_reading_count": 0,
+          "missing_interval_count": 0,
+          "non_monotonic_step_count": 1,
+          "reading_count": 721,
+          "stale": false,
+          "staleness_seconds": 0.0,
+          "target_metric": "non_monotonic_step_count",
+          "target_value": 1,
+          "unexpected_interval_count": 0
+        },
+        "operational_claim_allowed": false,
+        "thresholds": {
+          "expected_interval_seconds": 3600,
+          "review_when_target_nonzero": true,
+          "stale_after_seconds": 5400
+        }
+      },
+      "issue_id": "04b8f35f-dbc5-53aa-93eb-3a3b680b3584",
+      "meter_id": "meter-001-001",
+      "operator_note": "",
+      "portfolio_id": "synthetic-portfolio-001",
+      "severity": "warning",
+      "status": "open",
+      "title": "Register reversal"
+    },
+    {
+      "building_id": "building-001",
+      "category": "analytics",
+      "description": "The injected data defect is exposed as review evidence. The test verifies detector mechanics, not a field-calibrated alarm rate.",
+      "detected_at_utc": "2026-01-31T00:00:00Z",
+      "evidence": {
+        "analytic_id": "unexpected_sampling",
+        "analytics_evidence_id": "25c123f6-a9d0-5270-b851-9bb3eaf9da81",
+        "campaign_id": "41eb248c-5803-54df-828d-90ce19671684",
+        "classification": "data_quality",
+        "observed": {
+          "conflicting_timestamp_count": 0,
+          "duplicate_reading_count": 0,
+          "missing_interval_count": 0,
+          "non_monotonic_step_count": 0,
+          "reading_count": 721,
+          "stale": false,
+          "staleness_seconds": 0.0,
+          "target_metric": "unexpected_interval_count",
+          "target_value": 2,
+          "unexpected_interval_count": 2
+        },
+        "operational_claim_allowed": false,
+        "thresholds": {
+          "expected_interval_seconds": 3600,
+          "review_when_target_nonzero": true,
+          "stale_after_seconds": 5400
+        }
+      },
+      "issue_id": "e0345ad5-34e4-5b05-8569-8f8579b052fc",
+      "meter_id": "meter-001-001",
+      "operator_note": "",
+      "portfolio_id": "synthetic-portfolio-001",
+      "severity": "warning",
+      "status": "open",
+      "title": "Cadence shift"
+    }
+  ],
+  "page": "Analytics test bench",
+  "summary": {
+    "all_mechanisms_agree": true,
+    "campaign_count": 1,
+    "campaigns": [
+      {
+        "campaign_digest": "18c8237424bb3abe51164ba88721a60a455f34e32ca78fe0e6464bc1aaf37dcc",
+        "campaign_id": "41eb248c-5803-54df-828d-90ce19671684",
+        "evaluated_at_utc": "2026-01-31T00:00:00Z",
+        "portfolio_digest": "bb83cce95f61a96e89617c9a1a9a39ec37835b09d5c6aead3fd38252d02e594b",
+        "portfolio_id": "synthetic-portfolio-001"
+      }
+    ],
+    "contract_version": "1.0",
+    "evidence_count": 14,
+    "evidence_level_counts": {
+      "accounting_plausibility": 5,
+      "data_quality": 6,
+      "diagnostic_research": 3
+    },
+    "mechanism_agreement_count": 14,
+    "operational_claim_count": 0,
+    "outcome_counts": {
+      "clear": 1,
+      "research_only": 3,
+      "review": 10
+    },
+    "scope_note": "Synthetic campaigns verify software mechanisms only. Operational thresholds, accuracy, and diagnostic claims require held-out field data."
+  }
+}

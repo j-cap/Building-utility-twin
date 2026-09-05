@@ -29,7 +29,7 @@ def create_app(database_url: str) -> FastAPI:
 
     app = FastAPI(
         title="Building Utility Twin API",
-        version="0.8.0",
+        version="0.9.0",
         description="Operator API over canonical utility measurements.",
         lifespan=lifespan,
     )
@@ -96,6 +96,25 @@ def create_app(database_url: str) -> FastAPI:
             status=status,
             building_id=building_id,
             include_runtime_fields=include_runtime_fields,
+        )
+
+    @app.get("/api/v1/analytics/summary")
+    def analytics_summary() -> dict[str, object]:
+        return backend.analytics_summary()
+
+    @app.get("/api/v1/analytics/evidence")
+    def analytics_evidence(
+        evidence_level: Literal[
+            "data_quality", "accounting_plausibility", "diagnostic_research"
+        ]
+        | None = None,
+        outcome: Literal["clear", "review", "research_only"] | None = None,
+        campaign_id: str | None = None,
+    ) -> list[dict[str, object]]:
+        return backend.list_analytics_evidence(
+            evidence_level=evidence_level,
+            outcome=outcome,
+            campaign_id=campaign_id,
         )
 
     @app.patch("/api/v1/issues/{issue_id}")

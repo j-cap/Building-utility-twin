@@ -26,9 +26,14 @@ from sqlalchemy import (
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
+from .analytics_test_bench import (
+    AnalyticsCampaign,
+    EvidenceLevel,
+    EvidenceOutcome,
+)
 from .synthetic_portfolio import SyntheticPortfolio
 
-BACKEND_SCHEMA_VERSION = 1
+BACKEND_SCHEMA_VERSION = 2
 IMPORT_NAMESPACE = UUID("3df89c3e-38dc-4fd4-bbf9-b825843b6379")
 ISSUE_NAMESPACE = UUID("ef07a700-5c35-4b8a-aad5-9000d38781bc")
 ISSUE_STATUSES = frozenset({"open", "investigating", "resolved"})
@@ -161,12 +166,75 @@ class OperatorIssueRow(Base):
     )
 
 
+class AnalyticsCampaignRow(Base):
+    __tablename__ = "analytics_campaigns"
+    campaign_id: Mapped[str] = mapped_column(String, primary_key=True)
+    portfolio_id: Mapped[str] = mapped_column(
+        ForeignKey("portfolios.portfolio_id"), nullable=False
+    )
+    contract_version: Mapped[str] = mapped_column(String, nullable=False)
+    portfolio_digest: Mapped[str] = mapped_column(String, nullable=False)
+    campaign_digest: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    evaluated_at_utc: Mapped[str] = mapped_column(String, nullable=False)
+
+
+class AnalyticsEvidenceRow(Base):
+    __tablename__ = "analytics_evidence"
+    evidence_id: Mapped[str] = mapped_column(String, primary_key=True)
+    campaign_id: Mapped[str] = mapped_column(
+        ForeignKey("analytics_campaigns.campaign_id"), nullable=False
+    )
+    analytic_id: Mapped[str] = mapped_column(String, nullable=False)
+    evidence_level: Mapped[str] = mapped_column(String, nullable=False)
+    outcome: Mapped[str] = mapped_column(String, nullable=False)
+    expected_outcome: Mapped[str] = mapped_column(String, nullable=False)
+    mechanism_agrees: Mapped[int] = mapped_column(Integer, nullable=False)
+    building_id: Mapped[str | None] = mapped_column(
+        ForeignKey("buildings.building_id"), nullable=True
+    )
+    meter_id: Mapped[str | None] = mapped_column(
+        ForeignKey("meters.meter_id"), nullable=True
+    )
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    interpretation: Mapped[str] = mapped_column(String, nullable=False)
+    observed_json: Mapped[str] = mapped_column(String, nullable=False)
+    thresholds_json: Mapped[str] = mapped_column(String, nullable=False)
+    provenance_json: Mapped[str] = mapped_column(String, nullable=False)
+    operational_claim_allowed: Mapped[int] = mapped_column(Integer, nullable=False)
+    __table_args__ = (
+        UniqueConstraint(
+            "campaign_id", "analytic_id", name="uq_analytics_campaign_analytic"
+        ),
+        Index(
+            "ix_analytics_evidence_level_analytic",
+            "evidence_level",
+            "analytic_id",
+        ),
+        Index(
+            "ix_analytics_evidence_outcome_level_analytic",
+            "outcome",
+            "evidence_level",
+            "analytic_id",
+        ),
+    )
+
+
 @dataclass(frozen=True, slots=True)
 class BackendLoadResult:
     import_id: str
     source_row_count: int
     accepted_count: int
     duplicate_count: int
+    replayed: bool
+
+
+@dataclass(frozen=True, slots=True)
+class AnalyticsLoadResult:
+    campaign_id: str
+    evidence_count: int
+    accepted_count: int
+    duplicate_count: int
+    review_issue_count: int
     replayed: bool
 
 
@@ -272,11 +340,15 @@ class PersistentBackend:
     """SQLite-backed repository with explicit schema and idempotent loading."""
 
     def __init__(self, database_url: str) -> None:
-        connect_args = {"check_same_thread": False} if database_url.startswith("sqlite") else {}
+        self._is_sqlite = database_url.startswith("sqlite")
+        connect_args = {"check_same_thread": False} if self._is_sqlite else {}
         self.engine = create_engine(database_url, future=True, connect_args=connect_args)
-        if database_url.startswith("sqlite"):
+        if self._is_sqlite:
             event.listen(self.engine, "connect", self._configure_sqlite)
         self.initialize_schema()
+        if self._is_sqlite:
+            with self.engine.begin() as connection:
+                connection.exec_driver_sql("PRAGMA optimize")
 
     @staticmethod
     def _configure_sqlite(connection: Any, _: Any) -> None:
@@ -418,6 +490,202 @@ class PersistentBackend:
         return BackendLoadResult(
             import_id, len(rows), accepted_count, duplicate_count, False
         )
+
+    def store_analytics_campaign(
+        self, campaign: AnalyticsCampaign
+    ) -> AnalyticsLoadResult:
+        """Persist a deterministic campaign and promote review evidence to issues."""
+
+        campaign_row = {
+            "campaign_id": campaign.campaign_id,
+            "portfolio_id": campaign.portfolio_id,
+            "contract_version": campaign.contract_version,
+            "portfolio_digest": campaign.portfolio_digest,
+            "campaign_digest": campaign.digest,
+            "evaluated_at_utc": _utc_text(campaign.evaluated_at_utc),
+        }
+        evidence_rows = [
+            {
+                "evidence_id": item.evidence_id,
+                "campaign_id": item.campaign_id,
+                "analytic_id": item.analytic_id,
+                "evidence_level": item.evidence_level.value,
+                "outcome": item.outcome.value,
+                "expected_outcome": item.expected_outcome.value,
+                "mechanism_agrees": int(item.mechanism_agrees),
+                "building_id": item.building_id,
+                "meter_id": item.meter_id,
+                "title": item.title,
+                "interpretation": item.interpretation,
+                "observed_json": json.dumps(
+                    item.observed, sort_keys=True, separators=(",", ":")
+                ),
+                "thresholds_json": json.dumps(
+                    item.thresholds, sort_keys=True, separators=(",", ":")
+                ),
+                "provenance_json": json.dumps(
+                    item.provenance, sort_keys=True, separators=(",", ":")
+                ),
+                "operational_claim_allowed": int(item.operational_claim_allowed),
+            }
+            for item in campaign.evidence
+        ]
+        review_items = [
+            item
+            for item in campaign.evidence
+            if item.outcome is EvidenceOutcome.REVIEW
+            and item.evidence_level is not EvidenceLevel.DIAGNOSTIC_RESEARCH
+        ]
+        issue_rows = []
+        for item in review_items:
+            issue_id = str(uuid5(ISSUE_NAMESPACE, f"analytics:{item.evidence_id}"))
+            issue_rows.append(
+                {
+                    "issue_id": issue_id,
+                    "portfolio_id": campaign.portfolio_id,
+                    "building_id": item.building_id,
+                    "meter_id": item.meter_id,
+                    "category": "analytics",
+                    "severity": "warning",
+                    "title": item.title,
+                    "description": item.interpretation,
+                    "evidence_json": json.dumps(
+                        {
+                            "classification": item.evidence_level.value,
+                            "analytics_evidence_id": item.evidence_id,
+                            "analytic_id": item.analytic_id,
+                            "campaign_id": item.campaign_id,
+                            "observed": item.observed,
+                            "thresholds": item.thresholds,
+                            "operational_claim_allowed": False,
+                        },
+                        sort_keys=True,
+                        separators=(",", ":"),
+                    ),
+                    "status": "open",
+                    "operator_note": "",
+                    "detected_at_utc": _utc_text(campaign.evaluated_at_utc),
+                    "updated_at_utc": _utc_text(campaign.evaluated_at_utc),
+                }
+            )
+
+        with Session(self.engine) as session, session.begin():
+            if session.get(PortfolioRow, campaign.portfolio_id) is None:
+                raise KeyError(campaign.portfolio_id)
+            existing = session.get(AnalyticsCampaignRow, campaign.campaign_id)
+            if existing is not None:
+                return AnalyticsLoadResult(
+                    campaign.campaign_id,
+                    len(evidence_rows),
+                    0,
+                    len(evidence_rows),
+                    len(review_items),
+                    True,
+                )
+            session.execute(sqlite_insert(AnalyticsCampaignRow).values(campaign_row))
+            result = session.execute(sqlite_insert(AnalyticsEvidenceRow).values(evidence_rows))
+            accepted_count = int(result.rowcount or 0)
+            if issue_rows:
+                session.execute(
+                    sqlite_insert(OperatorIssueRow)
+                    .values(issue_rows)
+                    .on_conflict_do_nothing(index_elements=["issue_id"])
+                )
+        return AnalyticsLoadResult(
+            campaign.campaign_id,
+            len(evidence_rows),
+            accepted_count,
+            len(evidence_rows) - accepted_count,
+            len(review_items),
+            False,
+        )
+
+    @staticmethod
+    def _analytics_evidence_dict(row: AnalyticsEvidenceRow) -> dict[str, Any]:
+        return {
+            "evidence_id": row.evidence_id,
+            "campaign_id": row.campaign_id,
+            "analytic_id": row.analytic_id,
+            "evidence_level": row.evidence_level,
+            "outcome": row.outcome,
+            "expected_outcome": row.expected_outcome,
+            "mechanism_agrees": bool(row.mechanism_agrees),
+            "building_id": row.building_id,
+            "meter_id": row.meter_id,
+            "title": row.title,
+            "interpretation": row.interpretation,
+            "observed": json.loads(row.observed_json),
+            "thresholds": json.loads(row.thresholds_json),
+            "provenance": json.loads(row.provenance_json),
+            "operational_claim_allowed": bool(row.operational_claim_allowed),
+        }
+
+    def list_analytics_evidence(
+        self,
+        *,
+        evidence_level: str | None = None,
+        outcome: str | None = None,
+        campaign_id: str | None = None,
+    ) -> list[dict[str, Any]]:
+        if evidence_level is not None:
+            EvidenceLevel(evidence_level)
+        if outcome is not None:
+            EvidenceOutcome(outcome)
+        with Session(self.engine) as session:
+            statement = select(AnalyticsEvidenceRow)
+            if evidence_level is not None:
+                statement = statement.where(
+                    AnalyticsEvidenceRow.evidence_level == evidence_level
+                )
+            if outcome is not None:
+                statement = statement.where(AnalyticsEvidenceRow.outcome == outcome)
+            if campaign_id is not None:
+                statement = statement.where(
+                    AnalyticsEvidenceRow.campaign_id == campaign_id
+                )
+            rows = session.scalars(
+                statement.order_by(
+                    AnalyticsEvidenceRow.evidence_level,
+                    AnalyticsEvidenceRow.analytic_id,
+                )
+            ).all()
+        return [self._analytics_evidence_dict(row) for row in rows]
+
+    def analytics_summary(self) -> dict[str, Any]:
+        with Session(self.engine) as session:
+            campaigns = session.scalars(
+                select(AnalyticsCampaignRow).order_by(AnalyticsCampaignRow.campaign_id)
+            ).all()
+        evidence = self.list_analytics_evidence()
+        level_counts = Counter(item["evidence_level"] for item in evidence)
+        outcome_counts = Counter(item["outcome"] for item in evidence)
+        agreement_count = sum(item["mechanism_agrees"] for item in evidence)
+        return {
+            "contract_version": "1.0",
+            "campaign_count": len(campaigns),
+            "campaigns": [
+                {
+                    "campaign_id": row.campaign_id,
+                    "portfolio_id": row.portfolio_id,
+                    "portfolio_digest": row.portfolio_digest,
+                    "campaign_digest": row.campaign_digest,
+                    "evaluated_at_utc": row.evaluated_at_utc,
+                }
+                for row in campaigns
+            ],
+            "evidence_count": len(evidence),
+            "evidence_level_counts": dict(sorted(level_counts.items())),
+            "outcome_counts": dict(sorted(outcome_counts.items())),
+            "mechanism_agreement_count": agreement_count,
+            "all_mechanisms_agree": agreement_count == len(evidence),
+            "operational_claim_count": sum(
+                item["operational_claim_allowed"] for item in evidence
+            ),
+            "scope_note": (
+                "Synthetic campaigns verify software mechanisms only. Operational "
+                "thresholds, accuracy, and diagnostic claims require held-out field data."
+            ),
+        }
 
     def counts(self) -> dict[str, int]:
         with Session(self.engine) as session:

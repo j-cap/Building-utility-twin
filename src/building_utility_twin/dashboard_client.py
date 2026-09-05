@@ -35,6 +35,16 @@ class DashboardDataSource(Protocol):
         include_runtime_fields: bool = True,
     ) -> list[dict[str, Any]]: ...
 
+    def analytics_summary(self) -> dict[str, Any]: ...
+
+    def analytics_evidence(
+        self,
+        *,
+        evidence_level: str | None = None,
+        outcome: str | None = None,
+        campaign_id: str | None = None,
+    ) -> list[dict[str, Any]]: ...
+
     def update_issue(
         self,
         issue_id: str,
@@ -141,6 +151,27 @@ class HttpDashboardClient:
             payload["operator_note"] = operator_note
         return self._request(
             "PATCH", f"/api/v1/issues/{issue_id}", json_body=payload
+        )
+
+    def analytics_summary(self) -> dict[str, Any]:
+        return self._request("GET", "/api/v1/analytics/summary")
+
+    def analytics_evidence(
+        self,
+        *,
+        evidence_level: str | None = None,
+        outcome: str | None = None,
+        campaign_id: str | None = None,
+    ) -> list[dict[str, Any]]:
+        params: dict[str, object] = {}
+        if evidence_level is not None:
+            params["evidence_level"] = evidence_level
+        if outcome is not None:
+            params["outcome"] = outcome
+        if campaign_id is not None:
+            params["campaign_id"] = campaign_id
+        return self._request(
+            "GET", "/api/v1/analytics/evidence", params=params
         )
 
     def close(self) -> None:

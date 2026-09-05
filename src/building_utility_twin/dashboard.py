@@ -19,6 +19,7 @@ PAGE_NAMES = (
     "Building balance",
     "Meter detail",
     "Imports",
+    "Analytics test bench",
     "Review queue",
 )
 PLOTLY_LAYOUT = {
@@ -250,6 +251,107 @@ def _imports(client: HttpDashboardClient) -> None:
     columns[2].metric(
         "Accepted rows", f"{sum(item['accepted_count'] for item in imports):,}"
     )
+
+
+def _analytics_test_bench(client: HttpDashboardClient) -> None:
+    st.title("Analytics test bench")
+    st.caption(
+        "Synthetic mechanism checks · thresholds and diagnostic performance require field data"
+    )
+    summary = client.analytics_summary()
+    columns = st.columns(4)
+    columns[0].metric("Campaigns", summary["campaign_count"])
+    columns[1].metric("Evidence records", summary["evidence_count"])
+    columns[2].metric(
+        "Mechanisms agreeing",
+        f"{summary['mechanism_agreement_count']}/{summary['evidence_count']}",
+    )
+    columns[3].metric("Operational claims", summary["operational_claim_count"])
+    st.info(summary["scope_note"], icon="ℹ️")
+
+    filter_columns = st.columns(2)
+    level_label = filter_columns[0].selectbox(
+        "Evidence level",
+        (
+            "All",
+            "Data quality",
+            "Accounting / plausibility",
+            "Diagnostic research",
+        ),
+    )
+    outcome_label = filter_columns[1].selectbox(
+        "Outcome", ("All", "Clear", "Review", "Research only")
+    )
+    level = {
+        "Data quality": "data_quality",
+        "Accounting / plausibility": "accounting_plausibility",
+        "Diagnostic research": "diagnostic_research",
+    }.get(level_label)
+    outcome = {
+        "Clear": "clear",
+        "Review": "review",
+        "Research only": "research_only",
+    }.get(outcome_label)
+    evidence = client.analytics_evidence(evidence_level=level, outcome=outcome)
+    if not evidence:
+        st.warning("No analytics evidence matches the selected filters.")
+        return
+
+    level_counts = summary["evidence_level_counts"]
+    chart_data = [
+        {
+            "Evidence level": label,
+            "Cases": level_counts.get(key, 0),
+        }
+        for key, label in (
+            ("data_quality", "Data quality"),
+            ("accounting_plausibility", "Accounting / plausibility"),
+            ("diagnostic_research", "Diagnostic research"),
+        )
+    ]
+    figure = px.bar(
+        chart_data,
+        x="Evidence level",
+        y="Cases",
+        color="Evidence level",
+        color_discrete_sequence=("#38bdf8", "#f59e0b", "#a78bfa"),
+        title="Reference campaign coverage",
+    )
+    figure.update_layout(showlegend=False)
+    st.plotly_chart(_style_figure(figure, height=320), use_container_width=True)
+    st.dataframe(
+        [
+            {
+                "Level": item["evidence_level"],
+                "Analytic": item["analytic_id"],
+                "Outcome": item["outcome"],
+                "Expected": item["expected_outcome"],
+                "Agrees": item["mechanism_agrees"],
+                "Operational claim": item["operational_claim_allowed"],
+            }
+            for item in evidence
+        ],
+        use_container_width=True,
+        hide_index=True,
+    )
+    labels = {
+        str(item["evidence_id"]): f"{item['title']} · {item['outcome']}"
+        for item in evidence
+    }
+    evidence_id = st.selectbox(
+        "Evidence detail",
+        options=list(labels),
+        format_func=lambda value: labels[value],
+    )
+    selected = next(item for item in evidence if item["evidence_id"] == evidence_id)
+    st.write(selected["interpretation"])
+    left, right = st.columns(2)
+    with left:
+        st.markdown("**Observed evidence**")
+        st.json(selected["observed"])
+    with right:
+        st.markdown("**Test thresholds and gates**")
+        st.json(selected["thresholds"])
     st.dataframe(
         [
             {
@@ -271,7 +373,9 @@ def _imports(client: HttpDashboardClient) -> None:
 
 def _review_queue(client: HttpDashboardClient) -> None:
     st.title("Review queue")
-    st.caption("Review signals describe data quality; they are not confirmed leaks.")
+    st.caption(
+        "Review signals describe quality or plausibility evidence; they are not diagnoses."
+    )
     filter_columns = st.columns(2)
     status_label = filter_columns[0].selectbox(
         "Status",
@@ -317,13 +421,29 @@ def _review_queue(client: HttpDashboardClient) -> None:
     st.subheader(issue["title"])
     st.write(issue["description"])
     evidence = issue["evidence"]
-    evidence_columns = st.columns(4)
-    evidence_columns[0].metric(
-        "Completeness", f"{evidence['completeness_percent']:.2f}%"
-    )
-    evidence_columns[1].metric("Missing", evidence["missing_reading_count"])
-    evidence_columns[2].metric("Suspect", evidence["suspect_reading_count"])
-    evidence_columns[3].metric("Classification", evidence["classification"])
+    if issue["category"] == "data_quality":
+        evidence_columns = st.columns(4)
+        evidence_columns[0].metric(
+            "Completeness", f"{evidence['completeness_percent']:.2f}%"
+        )
+        evidence_columns[1].metric("Missing", evidence["missing_reading_count"])
+        evidence_columns[2].metric("Suspect", evidence["suspect_reading_count"])
+        evidence_columns[3].metric("Classification", evidence["classification"])
+    else:
+        evidence_columns = st.columns(3)
+        evidence_columns[0].metric("Evidence level", evidence["classification"])
+        evidence_columns[1].metric("Analytic", evidence["analytic_id"])
+        evidence_columns[2].metric(
+            "Operational claim",
+            "Allowed" if evidence["operational_claim_allowed"] else "Not allowed",
+        )
+        with st.expander("Observed values and test thresholds", expanded=True):
+            st.json(
+                {
+                    "observed": evidence["observed"],
+                    "thresholds": evidence["thresholds"],
+                }
+            )
 
     with st.form("review_form"):
         new_status = st.selectbox(
@@ -372,7 +492,7 @@ def _render() -> None:
         unsafe_allow_html=True,
     )
     st.sidebar.title("Utility Twin")
-    st.sidebar.caption("Operator workspace · P2")
+    st.sidebar.caption("Operator workspace · P3")
     default_url = os.environ.get("BUILDING_UTILITY_API_URL", "http://127.0.0.1:8000")
     api_url = st.sidebar.text_input("API URL", value=default_url)
     page = st.sidebar.radio("Workspace", PAGE_NAMES)
@@ -388,6 +508,7 @@ def _render() -> None:
                 "Building balance": _building_balance,
                 "Meter detail": _meter_detail,
                 "Imports": _imports,
+                "Analytics test bench": _analytics_test_bench,
                 "Review queue": _review_queue,
             }[page](client)
         except DashboardApiError:

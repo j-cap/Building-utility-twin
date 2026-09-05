@@ -103,6 +103,8 @@ Acceptance evidence:
 
 ### P3 -- Analytics test bench
 
+Status: **complete**
+
 Separate analytics into three evidence levels:
 
 - **data quality:** missing, stale, duplicated, conflicting, non-monotonic, or
@@ -114,6 +116,42 @@ Separate analytics into three evidence levels:
 
 Synthetic campaigns may verify mechanisms and software behavior. Operational
 thresholds and accuracy claims require held-out field data.
+
+Implemented capabilities:
+
+- a versioned evidence contract separates data quality, accounting and
+  plausibility, and diagnostic research, with deterministic identifiers,
+  observed values, thresholds, provenance, expected outcomes, and explicit
+  claim permissions;
+- one deterministic campaign covers all 14 planned mechanisms: six
+  data-quality checks, five accounting/plausibility checks, and three
+  diagnostic-research checks;
+- injected missing, stale, duplicate, conflicting, non-monotonic, and
+  irregularly sampled readings exercise the data-quality detectors;
+- period consumption, incomplete topology, building/apartment balance,
+  persistent night flow, and thermal balance exercise accounting and
+  plausibility behavior;
+- leak-versus-meter-fault ambiguity, an hourly-profile forecast, and a fitted
+  hourly anomaly score are retained as research-only evidence;
+- campaigns and evidence are stored idempotently, exposed through two
+  versioned API routes, shown on a sixth dashboard page, and linked to the P2
+  review queue when the outcome requires review;
+- diagnostic-research evidence cannot produce an operational disposition or
+  claim, and all synthetic thresholds remain visibly test-only.
+
+Acceptance evidence:
+
+- all 14 mechanisms produce the expected deterministic disposition;
+- the evidence split is exactly 6/5/3 across the three levels;
+- the outcome split is one clear, ten review, and three research-only records;
+- all ten review records and only those records reach the operator queue;
+- replaying the campaign accepts zero evidence rows and reports all 14 as
+  duplicates;
+- the campaign makes zero operational claims;
+- two independent P3 runs produce byte-identical summaries and analytics
+  snapshots;
+- unit, persistence, API, dashboard-client, and end-to-end tests pass in
+  continuous integration.
 
 ### P4 -- Vendor-adapter toolkit
 

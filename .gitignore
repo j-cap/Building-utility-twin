@@ -5,6 +5,7 @@ __pycache__/
 dist/
 build/
 *.egg-info/
+*.sqlite3
 report/*.aux
 report/*.bbl
 report/*.blg
@@ -14,4 +15,3 @@ report/*.log
 report/*.out
 report/*.toc
 report/*.pdf
-

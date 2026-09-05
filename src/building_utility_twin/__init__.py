@@ -14,6 +14,13 @@ from .anomaly_analytics import (
     simulate_experiment_4,
     simulate_meter_channel,
 )
+from .analytics_test_bench import (
+    AnalyticsCampaign,
+    AnalyticsEvidence,
+    EvidenceLevel,
+    EvidenceOutcome,
+    run_analytics_campaign,
+)
 from .building_system import (
     ApartmentSimulation,
     ApartmentSpec,
@@ -47,6 +54,8 @@ from .telemetry import (
 )
 
 __all__ = [
+    "AnalyticsCampaign",
+    "AnalyticsEvidence",
     "AnalyticsThresholds",
     "ExperimentConfig",
     "Experiment1Config",
@@ -54,6 +63,8 @@ __all__ = [
     "Experiment3Config",
     "Experiment4Config",
     "Experiment4SimulationResult",
+    "EvidenceLevel",
+    "EvidenceOutcome",
     "ExcessStorageLossConfig",
     "ApartmentSimulation",
     "ApartmentSpec",
@@ -82,6 +93,7 @@ __all__ = [
     "WaterLeakConfig",
     "generate_fixture_demand",
     "reconcile_observations",
+    "run_analytics_campaign",
     "simulate_imperfect_telemetry",
     "simulate_building",
     "simulate_domestic_hot_water",

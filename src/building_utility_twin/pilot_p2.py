@@ -264,7 +264,7 @@ def run_pilot_p2(
             item["evidence"]["classification"] == "data_quality"
             for item in issues
         ),
-        "operator_api_complete": api_endpoint_count == 11,
+        "operator_api_complete": api_endpoint_count >= 11,
     }
     severity_counts: dict[str, int] = {}
     for issue in issues:
