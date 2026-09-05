@@ -1,8 +1,8 @@
 \documentclass[11pt,a4paper]{article}
 \usepackage[margin=25mm]{geometry}
-\usepackage{amsmath,amssymb,booktabs,graphicx,hyperref}
+\usepackage{amsmath,amssymb,booktabs,graphicx,hyperref,placeins}
 \usepackage{xcolor}
-\graphicspath{{../results/experiment_0/}{../results/experiment_1/}{../results/experiment_2/}{../results/experiment_3/}}
+\graphicspath{{../results/experiment_0/}{../results/experiment_1/}{../results/experiment_2/}{../results/experiment_3/}{../results/experiment_4/}}
 \hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue}
 
 \title{Building Utility Twin\\\large Simulation Framework and Experiment Plan}
@@ -31,6 +31,8 @@ Iteration C keeps that physical reference fixed and tests the meter and
 communications boundary under realistic data-path imperfections.
 Iteration D expands the topology to multiple apartments and replaces the
 instantaneous boiler with a dynamic shared domestic-hot-water store.
+Iteration E composes this building with imperfect meter telemetry and adds the
+first operational reconciliation and anomaly-detection layer.
 
 \section{System architecture}
 The intended data path is
@@ -665,10 +667,188 @@ also isolate Experiment~3 from the telemetry faults of Experiment~2. Multi-seed
 and parameter sweeps are required before the diversity factor, cycling, or loss
 fractions can support equipment or business decisions.
 
+\FloatBarrier
+\section{Iteration E: reconciliation and anomaly analytics}
+Experiment~4 closes the previously separate topology and telemetry paths. The
+four apartment total-water registers and the building register are now finite,
+noisy devices with five-minute readout, independent packet loss and delay, and
+rollover. The building meter also undergoes one declared reset. Reconciled
+registers feed a water-balance detector, while the shared-tank state equation
+feeds a thermal-loss detector. All detector inputs and residual outputs retain
+the canonical measurement contract and are persisted through the file-backed
+store.
+
+This experiment is a controlled detectability study, not a trained anomaly
+classifier. It asks whether known deviations remain visible after realistic
+meter and transport imperfections, and whether the available measurements are
+sufficient to attribute their cause.
+
+\subsection{Injected reference anomalies}
+Three non-overlapping four-hour deviations are introduced on the same reference
+day:
+\begin{enumerate}
+  \item from 03:00 to 07:00 UTC, a constant
+  $0.30\,\mathrm{L\,min^{-1}}$ leak is included by the building meter but not
+  by any apartment meter, producing $72.0\,\mathrm{L}$ of unallocated water;
+  \item from 11:00 to 15:00 UTC, apartment~201 registers only 75\% of its true
+  increments, omitting $15.760\,\mathrm{L}$ over the realized demand trace;
+  \item from 18:00 to 22:00 UTC, the tank standing-loss coefficient is four
+  times its nominal value, adding $1.366\,\mathrm{kWh}$ of storage loss.
+\end{enumerate}
+The water windows do not overlap so each injection can be evaluated separately.
+The detector itself receives no injection labels.
+
+Each of the five water meters has $0.1\,\mathrm{L}$ resolution, 0.5\% standard
+deviation on positive increments, a $200\,\mathrm{L}$ finite register, 8\%
+packet-loss probability, and a uniformly sampled delay up to ten minutes.
+Seeds are distinct across meters. First and final packets and the declared
+building-meter reset are delivered by construction. Reconciliation is performed
+offline in observation-time order; the result therefore tests data-quality and
+diagnostic logic rather than the behavior of a real-time alarm service.
+
+\subsection{Water-balance detector and identifiability}
+Analytics uses successive timestamps that are available for the building meter
+and all apartment meters. For a common window $[t_i,t_j]$, the volume and
+average-rate residuals are
+\begin{align}
+  r^V_{ij}
+    &= \Delta V_{\mathrm{bldg},ij}
+       - \sum_{a=1}^{N_a}\Delta V_{a,ij},\\
+  r^q_{ij} &= \frac{r^V_{ij}}{t_j-t_i}.
+\end{align}
+Missing packets lengthen a window rather than being interpreted as zero
+consumption. The result becomes available only after the latest packet for its
+end boundary has arrived. A water alarm is issued when
+$|r^q_{ij}|\geq 0.15\,\mathrm{L\,min^{-1}}$.
+
+The residual reveals an important structural limitation. Neglecting small
+quantization and noise errors, the positive residual in this experiment is
+\begin{equation}
+  r^V_{ij}
+  = V_{\mathrm{leak},ij}
+    + (1-\alpha)\Delta V_{201,ij},
+  \qquad \alpha=0.75.
+\end{equation}
+The same balance equation therefore observes both a downstream leak and an
+under-registering apartment meter. With only one building register and the four
+apartment registers, their sources are not identifiable from the residual
+alone. Additional evidence such as night-flow persistence, valve state, a
+redundant branch meter, meter self-diagnostics, or a maintenance test is needed
+for attribution. Experiment~4 consequently reports the operational alarm as a
+\emph{water-balance anomaly}, not as a confirmed leak.
+
+\subsection{Thermal-loss detector}
+The storage detector compares the measured tank-state change with the nominal
+energy model over each five-minute window:
+\begin{align}
+  r^E_{ij}
+    &= \Delta E_{\mathrm{tank},ij}
+       - \left(\Delta E_{\mathrm{boiler},ij}
+       - \Delta E_{\mathrm{DHW},ij}
+       - \Delta E_{\mathrm{loss,nom},ij}\right),\\
+  P_{\mathrm{unacc},ij} &= -\frac{r^E_{ij}}{t_j-t_i}.
+\end{align}
+Here the nominal loss uses the Experiment~3 coefficient
+$UA=3\,\mathrm{W\,K^{-1}}$ and the simulated tank temperature. An alarm is
+issued for $P_{\mathrm{unacc},ij}\geq150\,\mathrm{W}$. The physical simulator
+continues to close its balance with the actual loss. The residual measures only
+the mismatch between actual and nominal loss models.
+
+\subsection{Acceptance criteria and verification}
+Experiment~4 is accepted when all configured telemetry fault classes occur,
+all register rollovers and the reset are recovered, and telemetry reconstruction
+error remains below $1.0\,\mathrm{L}$. The water detector must identify both
+injected events with precision at least 0.85 and recall at least 0.70. The
+thermal detector must achieve precision and recall of at least 0.95. Finally,
+all canonical raw, reconciled, and residual measurements must round-trip through
+storage, and independent runs must produce byte-identical machine-readable
+artifacts.
+
+The complete suite now contains 31 passing tests. New unit tests cover anomaly
+window validation, loss-multiplier bounds, unchanged nominal Experiment~3
+behavior, multi-meter rollover/reset recovery, physical storage conservation,
+water and thermal alarm behavior, and the deliberately unresolved water-source
+ambiguity. The end-to-end runner is executed twice and compares the measurement,
+telemetry, water-balance, thermal-balance, alarm, and summary files exactly.
+
+\section{Experiment 4 results}
+Table~\ref{tab:experiment4-results} summarizes the reference run. The five
+meters schedule 1,445 packets and deliver 1,339. Packet loss leaves 197 adjacent
+common water-balance windows rather than the 288 ideal five-minute windows.
+All eleven rollovers and the single reset are recovered. The largest error of a
+reconciled register relative to its intended device-level cumulative signal is
+$0.468\,\mathrm{L}$.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Experiment~4 telemetry and anomaly-detection results.}
+  \label{tab:experiment4-results}
+  \begin{tabular}{lr}
+    \toprule
+    Metric & Result \\
+    \midrule
+    Water meters / scheduled / delivered packets & 5 / 1,445 / 1,339 \\
+    Simulated and recovered rollovers / resets & 11 / 11; 1 / 1 \\
+    Maximum telemetry reconstruction error & 0.468 L \\
+    Common water windows & 197 \\
+    Injected leak / omitted apartment volume & 72.0 / 15.760 L \\
+    Water TP / FP / FN & 45 / 0 / 0 \\
+    Water precision / recall & 1.000 / 1.000 \\
+    Leak / meter-fault detection delay & 669 / 1,086 s \\
+    Thermal TP / FP / FN & 48 / 0 / 0 \\
+    Thermal precision / recall & 1.000 / 1.000 \\
+    Peak unaccounted loss power & 359.204 W \\
+    Excess standing loss / added plant input & 1.366 / 1.405 kWh \\
+    Heater runtime, baseline / anomaly & 58 / 60 min \\
+    Canonical measurements / alarms & 3,163 / 93 \\
+    Acceptance & pass \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\FloatBarrier
+Figure~\ref{fig:experiment4} shows that the reconciled water residual follows
+the constant leak and the intermittent omitted apartment volume despite packet
+loss, delayed arrivals, finite resolution, and device noise. The apartment~201
+register error then remains near $-16\,\mathrm{L}$ because a cumulative meter
+cannot recover volume that it never registered. The thermal residual changes
+from numerical zero to approximately 330--359 W during the excess-loss window.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.88\linewidth]{experiment_4_anomaly_analytics.png}
+  \caption{Experiment~4. Top: reconciled building-minus-apartment water
+  residual, injected missing volume, and alarm threshold; second: reconciled
+  register errors relative to physical volume; third: storage-model residual;
+  bottom: tank temperature and boiler output. Green, amber, and violet bands
+  mark the leak, meter under-registration, and excess-loss windows.}
+  \label{fig:experiment4}
+\end{figure}
+
+Both detectors achieve perfect window-level scores on this designed day, but
+this is a pipeline verification result rather than evidence of field-level
+performance. The anomalies are large, non-overlapping, and evaluated using
+thresholds chosen for this configuration. Only one physical demand seed and one
+set of telemetry seeds are used. The thermal channels and model parameters are
+known exactly except for the injected loss multiplier, and the detector has no
+sensor drift, temperature bias, or boiler-state error to reject. Most
+importantly, water-balance detection does not establish leak attribution. A
+multi-day, multi-seed threshold study with smaller and overlapping anomalies is
+needed before sensitivity, specificity, or detection delay can be generalized.
+
+The useful conclusion is narrower and more concrete: the canonical data path
+survives the combined building and telemetry complexity, volume and energy
+residuals can expose controlled departures, and the experiment identifies which
+business claim the present sensor topology cannot yet support.
+
+\FloatBarrier
 \section{Planned extensions}
-Experiment~4 will add reconciliation, plausibility, leak, and anomaly analytics.
-Experiment~5 will replace a simulated source with a real file or API adapter
-while preserving the canonical contract, storage, and analysis layers.
+Experiment~5 will replace a simulated source with a historical meter export or
+API adapter while preserving the canonical contract, storage, and analysis
+layers. In parallel, a broader validation campaign should vary demand and
+telemetry seeds, anomaly sizes and durations, threshold selection data, and
+overlap between physical and sensor faults. A real pilot must also define the
+extra evidence required to distinguish leaks from meter errors.
 
 \clearpage
 \begingroup

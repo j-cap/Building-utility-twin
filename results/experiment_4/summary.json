@@ -1,0 +1,338 @@
+{
+  "acceptance": {
+    "checks": {
+      "all_telemetry_faults_exercised": true,
+      "canonical_round_trip": true,
+      "leak_event_detected": true,
+      "meter_fault_event_detected": true,
+      "rollovers_and_resets_recovered": true,
+      "telemetry_reconstruction_within_limit": true,
+      "thermal_precision": true,
+      "thermal_recall": true,
+      "water_precision": true,
+      "water_recall": true
+    },
+    "passed": true
+  },
+  "configuration": {
+    "analytics": {
+      "maximum_telemetry_reconstruction_error_l": 1.0,
+      "minimum_thermal_precision": 0.95,
+      "minimum_thermal_recall": 0.95,
+      "minimum_water_precision": 0.85,
+      "minimum_water_recall": 0.7,
+      "thermal_loss_alarm_w": 150.0,
+      "water_balance_alarm_l_min": 0.15
+    },
+    "building_configuration": {
+      "aggregation_tolerance_m3": 1e-12,
+      "apartments": [
+        {
+          "apartment_id": "apartment-101",
+          "demand_scale": 0.8,
+          "occupants": 1,
+          "seed": 20260905
+        },
+        {
+          "apartment_id": "apartment-102",
+          "demand_scale": 1.0,
+          "occupants": 2,
+          "seed": 20260906
+        },
+        {
+          "apartment_id": "apartment-201",
+          "demand_scale": 1.1,
+          "occupants": 3,
+          "seed": 20260907
+        },
+        {
+          "apartment_id": "apartment-202",
+          "demand_scale": 0.9,
+          "occupants": 4,
+          "seed": 20260908
+        }
+      ],
+      "asset_ids": {
+        "shared_boiler": "shared-dhw-boiler-001",
+        "shared_tank": "shared-dhw-tank-001"
+      },
+      "energy_tolerance_j": 1e-05,
+      "experiment_id": "iteration_d_experiment_3",
+      "physical_template_configuration": {
+        "asset_ids": {
+          "boiler": "central-boiler-001",
+          "boiler_energy_meter": "boiler-input-meter-001",
+          "cold_branch": "cold-water-branch-001",
+          "cold_meter": "cold-water-meter-001",
+          "heat_meter": "useful-heat-meter-001",
+          "hot_branch": "dhw-supply-001",
+          "hot_meter": "hot-water-meter-001",
+          "water_inlet": "building-water-inlet-001",
+          "water_meter": "water-main-meter-001"
+        },
+        "boiler_efficiency": 0.9,
+        "cold_supply_temperature_c": 10.0,
+        "conservation_tolerance_m3": 1e-12,
+        "duration_seconds": 86400,
+        "energy_tolerance_j": 1e-06,
+        "experiment_id": "iteration_b_experiment_1",
+        "fixtures": [
+          {
+            "daily_volume_share": 0.27,
+            "hot_fraction": 0.0,
+            "mean_event_volume_l": 6.0,
+            "name": "toilet",
+            "nominal_flow_l_min": 6.0,
+            "time_profile": "awake"
+          },
+          {
+            "daily_volume_share": 0.3,
+            "hot_fraction": 0.75,
+            "mean_event_volume_l": 45.0,
+            "name": "shower",
+            "nominal_flow_l_min": 8.0,
+            "time_profile": "morning_evening"
+          },
+          {
+            "daily_volume_share": 0.23,
+            "hot_fraction": 0.45,
+            "mean_event_volume_l": 3.0,
+            "name": "faucet",
+            "nominal_flow_l_min": 4.0,
+            "time_profile": "meals"
+          },
+          {
+            "daily_volume_share": 0.12,
+            "hot_fraction": 0.0,
+            "mean_event_volume_l": 45.0,
+            "name": "laundry",
+            "nominal_flow_l_min": 7.0,
+            "time_profile": "daytime"
+          },
+          {
+            "daily_volume_share": 0.04,
+            "hot_fraction": 0.0,
+            "mean_event_volume_l": 13.0,
+            "name": "dishwasher",
+            "nominal_flow_l_min": 5.0,
+            "time_profile": "evening"
+          },
+          {
+            "daily_volume_share": 0.04,
+            "hot_fraction": 0.4413461538461539,
+            "mean_event_volume_l": 5.0,
+            "name": "cleaning",
+            "nominal_flow_l_min": 4.0,
+            "time_profile": "daytime"
+          }
+        ],
+        "hot_supply_temperature_c": 60.0,
+        "occupants": 3,
+        "seed": 20260903,
+        "start_utc": "2026-01-15T00:00:00Z",
+        "step_seconds": 60,
+        "target_hot_l_per_person_day": 45.0,
+        "target_total_l_per_person_day": 130.0,
+        "water_density_kg_m3": 997.0,
+        "water_heat_capacity_j_kg_k": 4180.0
+      },
+      "shared_tank": {
+        "ambient_temperature_c": 20.0,
+        "boiler_efficiency": 0.9,
+        "boiler_max_thermal_power_kw": 30.0,
+        "initial_temperature_c": 60.0,
+        "minimum_service_temperature_c": 50.0,
+        "standing_loss_coefficient_w_k": 3.0,
+        "tank_volume_l": 300.0,
+        "thermostat_lower_c": 55.0,
+        "thermostat_upper_c": 60.0
+      }
+    },
+    "excess_storage_loss": {
+      "end_offset_seconds": 79200,
+      "loss_multiplier": 4.0,
+      "start_offset_seconds": 64800
+    },
+    "experiment_id": "iteration_e_experiment_4",
+    "meter_underregistration": {
+      "end_offset_seconds": 54000,
+      "meter_id": "apartment-201",
+      "registration_fraction": 0.75,
+      "start_offset_seconds": 39600
+    },
+    "telemetry": {
+      "increment_noise_std_fraction": 0.005,
+      "max_packet_delay_seconds": 600,
+      "packet_loss_probability": 0.08,
+      "readout_interval_seconds": 300,
+      "register_modulus_l": 200.0,
+      "register_resolution_l": 0.1,
+      "reset_offsets_seconds": [
+        46800
+      ],
+      "rollover_drop_threshold_fraction": 0.25,
+      "seed": 20260909
+    },
+    "water_leak": {
+      "end_offset_seconds": 25200,
+      "flow_l_min": 0.3,
+      "start_offset_seconds": 10800
+    }
+  },
+  "experiment_id": "iteration_e_experiment_4",
+  "injections": {
+    "baseline_standing_loss_energy_kwh": 2.756350630937639,
+    "excess_standing_loss_energy_kwh": 1.3661550546846795,
+    "meter_underregistration_volume_l": 15.75973245864426,
+    "standing_loss_energy_kwh": 4.122505685622318,
+    "unmetered_leak_volume_l": 72.00000000000009
+  },
+  "reproducibility": {
+    "alarms_sha256": "d1a06dd8d40004a3ca3c4a58c6496d9a56e0b4f9a8fdcc132dd425193597ff7b",
+    "building_apartment_seeds": [
+      20260905,
+      20260906,
+      20260907,
+      20260908
+    ],
+    "measurements_sha256": "14f0b8c2910b3bf780176942fd909c4883f80da181a9bde059af7ad631a6b8c9",
+    "telemetry_seed": 20260909,
+    "telemetry_sha256": "3ac102f4cdcd76e52fd461bfc11ec1c00e370538e1e4c2c43d705b0ea7b21342",
+    "thermal_balance_sha256": "9da311469dc3804d97a817aa664c606ae4ddf76f107f71c47bb258ed23b4f6d2",
+    "water_balance_sha256": "bafbf2e6d7a31c370c5aa370120bfd8b915353b85a67730c6c727a652f5923eb"
+  },
+  "results": {
+    "alarm_count": 93,
+    "stored_measurement_count": 3163
+  },
+  "schema_version": "1.0",
+  "telemetry": {
+    "all_discontinuities_recovered": true,
+    "fault_classes_exercised": {
+      "finite_resolution": true,
+      "measurement_noise": true,
+      "out_of_order_arrival": true,
+      "packet_delay": true,
+      "packet_loss": true,
+      "register_reset": true,
+      "register_rollover": true,
+      "sparse_readout": true
+    },
+    "maximum_reconstruction_error_l": 0.46849246519642396,
+    "meter_channels": {
+      "apartment-101": {
+        "configured_reset_count": 0,
+        "delivered_packet_count": 271,
+        "delivery_ratio": 0.9377162629757786,
+        "detected_reset_count": 0,
+        "detected_rollover_count": 0,
+        "dropped_packet_count": 18,
+        "maximum_telemetry_reconstruction_error_l": 0.16042176485797643,
+        "out_of_order_packet_count": 27,
+        "physical_end_volume_l": 104.00000000000004,
+        "registered_end_volume_l": 104.00000000000004,
+        "scheduled_readout_count": 289,
+        "simulated_rollover_count": 0
+      },
+      "apartment-102": {
+        "configured_reset_count": 0,
+        "delivered_packet_count": 270,
+        "delivery_ratio": 0.9342560553633218,
+        "detected_reset_count": 0,
+        "detected_rollover_count": 1,
+        "dropped_packet_count": 19,
+        "maximum_telemetry_reconstruction_error_l": 0.2151268519974825,
+        "out_of_order_packet_count": 32,
+        "physical_end_volume_l": 260.00000000000006,
+        "registered_end_volume_l": 260.00000000000006,
+        "scheduled_readout_count": 289,
+        "simulated_rollover_count": 1
+      },
+      "apartment-201": {
+        "configured_reset_count": 0,
+        "delivered_packet_count": 268,
+        "delivery_ratio": 0.9273356401384083,
+        "detected_reset_count": 0,
+        "detected_rollover_count": 2,
+        "dropped_packet_count": 21,
+        "maximum_telemetry_reconstruction_error_l": 0.46849246519642396,
+        "out_of_order_packet_count": 30,
+        "physical_end_volume_l": 429.00000000000006,
+        "registered_end_volume_l": 413.24026754135576,
+        "scheduled_readout_count": 289,
+        "simulated_rollover_count": 2
+      },
+      "apartment-202": {
+        "configured_reset_count": 0,
+        "delivered_packet_count": 264,
+        "delivery_ratio": 0.9134948096885813,
+        "detected_reset_count": 0,
+        "detected_rollover_count": 2,
+        "dropped_packet_count": 25,
+        "maximum_telemetry_reconstruction_error_l": 0.27474765021345826,
+        "out_of_order_packet_count": 32,
+        "physical_end_volume_l": 468.0000000000003,
+        "registered_end_volume_l": 468.0000000000003,
+        "scheduled_readout_count": 289,
+        "simulated_rollover_count": 2
+      },
+      "building": {
+        "configured_reset_count": 1,
+        "delivered_packet_count": 266,
+        "delivery_ratio": 0.9204152249134948,
+        "detected_reset_count": 1,
+        "detected_rollover_count": 6,
+        "dropped_packet_count": 23,
+        "maximum_telemetry_reconstruction_error_l": 0.42628389457566307,
+        "out_of_order_packet_count": 29,
+        "physical_end_volume_l": 1333.0000000000014,
+        "registered_end_volume_l": 1333.0000000000014,
+        "scheduled_readout_count": 289,
+        "simulated_rollover_count": 6
+      }
+    }
+  },
+  "thermal_balance": {
+    "alarm_threshold_w": 150.0,
+    "false_negative_count": 0,
+    "false_positive_count": 0,
+    "maximum_unaccounted_loss_power_w": 359.20386771729915,
+    "plant_impact": {
+      "additional_boiler_input_energy_kwh": 1.405199885255346,
+      "anomalous_boiler_input_energy_kwh": 30.49251443559747,
+      "anomalous_final_temperature_c": 58.733262221249504,
+      "anomalous_heater_cycle_count": 12,
+      "anomalous_heater_runtime_minutes": 60,
+      "baseline_boiler_input_energy_kwh": 29.087314550342125,
+      "baseline_final_temperature_c": 58.890083718119854,
+      "baseline_heater_cycle_count": 12,
+      "baseline_heater_runtime_minutes": 58
+    },
+    "precision": 1.0,
+    "recall": 1.0,
+    "true_negative_count": 240,
+    "true_positive_count": 48,
+    "window_count": 288
+  },
+  "water_balance": {
+    "alarm_threshold_l_min": 0.15,
+    "common_window_count": 197,
+    "false_negative_count": 0,
+    "false_positive_count": 0,
+    "identifiability_note": "A positive building-minus-apartment residual detects missing volume but cannot by itself distinguish an unmetered leak from an under-registering apartment meter.",
+    "leak_event": {
+      "detected": true,
+      "detection_delay_seconds": 669
+    },
+    "meter_underregistration_event": {
+      "detected": true,
+      "detection_delay_seconds": 1086
+    },
+    "precision": 1.0,
+    "recall": 1.0,
+    "source_identifiable_from_balance_alone": false,
+    "true_negative_count": 152,
+    "true_positive_count": 45,
+    "window_count": 197
+  }
+}

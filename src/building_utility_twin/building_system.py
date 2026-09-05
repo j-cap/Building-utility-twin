@@ -244,7 +244,9 @@ def _sum_series(series: tuple[tuple[float, ...], ...]) -> tuple[float, ...]:
 
 
 def _simulate_shared_tank(
-    config: Experiment3Config, hot_flow_m3_s: tuple[float, ...]
+    config: Experiment3Config,
+    hot_flow_m3_s: tuple[float, ...],
+    standing_loss_multipliers: tuple[float, ...] | None = None,
 ) -> SharedTankResult:
     physical = config.physical_template
     tank = config.shared_tank
@@ -271,7 +273,19 @@ def _simulate_shared_tank(
     heater_on = initial_temperature_k <= lower_k
     maximum_power_w = tank.boiler_max_thermal_power_kw * 1000.0
 
-    for hot_flow in hot_flow_m3_s:
+    if standing_loss_multipliers is None:
+        standing_loss_multipliers = (1.0,) * len(hot_flow_m3_s)
+    if len(standing_loss_multipliers) != len(hot_flow_m3_s):
+        raise ValueError("standing-loss multipliers must match the flow trace")
+    if any(
+        not math.isfinite(value) or value < 0.0
+        for value in standing_loss_multipliers
+    ):
+        raise ValueError("standing-loss multipliers must be finite and non-negative")
+
+    for hot_flow, loss_multiplier in zip(
+        hot_flow_m3_s, standing_loss_multipliers
+    ):
         temperature_k = temperatures[-1]
         if heater_on and temperature_k >= upper_k - 1e-12:
             heater_on = False
@@ -284,8 +298,10 @@ def _simulate_shared_tank(
             * hot_flow
             * max(temperature_k - cold_k, 0.0)
         )
-        loss_power_w = tank.standing_loss_coefficient_w_k * max(
-            temperature_k - ambient_k, 0.0
+        loss_power_w = (
+            loss_multiplier
+            * tank.standing_loss_coefficient_w_k
+            * max(temperature_k - ambient_k, 0.0)
         )
         requested_boiler_power_w = maximum_power_w if heater_on else 0.0
         maximum_admissible_power_w = (
@@ -334,7 +350,11 @@ def _simulate_shared_tank(
     )
 
 
-def simulate_building(config: Experiment3Config) -> BuildingSimulationResult:
+def simulate_building(
+    config: Experiment3Config,
+    *,
+    standing_loss_multipliers: tuple[float, ...] | None = None,
+) -> BuildingSimulationResult:
     apartment_results = tuple(
         ApartmentSimulation(
             spec=spec,
@@ -355,7 +375,9 @@ def simulate_building(config: Experiment3Config) -> BuildingSimulationResult:
     )
     meter = IdealCumulativeMeter()
     step_seconds = config.physical_template.step_seconds
-    shared_tank = _simulate_shared_tank(config, hot_flow)
+    shared_tank = _simulate_shared_tank(
+        config, hot_flow, standing_loss_multipliers
+    )
     return BuildingSimulationResult(
         apartments=apartment_results,
         timestamps=apartment_results[0].demand.timestamps,

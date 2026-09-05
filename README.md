@@ -5,7 +5,7 @@ starts with a deliberately small vertical slice and preserves the same
 interfaces when simulated devices are replaced by real meters.
 
 The technical design, experiment sequence, and findings are documented in
-[`report/main.tex`](report/main.tex). Iterations A through D are implemented as
+[`report/main.tex`](report/main.tex). Iterations A through E are implemented as
 reproducible, end-to-end vertical slices.
 
 ## Experiment 0
@@ -33,6 +33,9 @@ PYTHONPATH=src python scripts/run_experiment_2.py \
 PYTHONPATH=src python scripts/run_experiment_3.py \
   --config config/experiment_3.json \
   --output results/experiment_3
+PYTHONPATH=src python scripts/run_experiment_4.py \
+  --config config/experiment_4.json \
+  --output results/experiment_4
 cd report && pdflatex -interaction=nonstopmode -halt-on-error main.tex
 ```
 
@@ -89,6 +92,21 @@ canonical contract and writes long-form apartment/event ledgers. Its energy
 balance explicitly includes delivered hot-water energy, standing loss, boiler
 thermal output, plant input, and the change in stored tank energy.
 
+## Experiment 4
+
+Experiment 4 composes the multi-apartment building with finite cumulative
+registers, sparse five-minute readout, packet loss, packet delay, rollover, and
+a declared building-meter reset. Its reference day injects three controlled
+anomalies: a 0.30 L/min unmetered leak, 25% under-registration at one apartment
+meter, and fourfold tank standing loss during separate four-hour windows.
+
+The analytics layer reconciles the device registers, evaluates building-minus-
+apartment water balance, and checks the shared-tank state equation against the
+nominal standing-loss model. It writes auditable water/thermal windows and alarm
+ledgers. The aggregate water residual detects missing volume but cannot alone
+identify whether its source is a leak or an under-registering apartment meter;
+that limitation is an explicit Experiment 4 result.
+
 ## Repository structure
 
 ```text
@@ -112,5 +130,7 @@ report/       LaTeX design and findings report
    missing readings, rollover/reset handling, and auditable reconciliation.
 4. **Iteration D / Experiment 3 (complete):** apartments, exact building-level
    aggregation, and a dynamic shared DHW store with boiler and standing losses.
-5. Add reconciliation analytics for plausibility, leaks, and anomalies.
-6. Replace simulated adapters with field-device and building-system adapters.
+5. **Iteration E / Experiment 4 (complete):** building-wide imperfect telemetry,
+   water-balance anomaly detection, and shared-storage loss diagnostics.
+6. **Iteration F / Experiment 5:** replace simulated adapters with a historical
+   meter export or API while preserving contracts, storage, and analytics.
