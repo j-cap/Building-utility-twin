@@ -1,0 +1,64 @@
+{
+  "acceptance": {
+    "checks": {
+      "all_registers_monotonic": true,
+      "all_source_rows_accepted": true,
+      "both_reference_events_detected": true,
+      "canonical_round_trip": true,
+      "input_matches_frozen_hash": true,
+      "no_alarms_outside_reference_windows": true
+    },
+    "passed": true
+  },
+  "experiment_id": "iteration_f_experiment_5",
+  "import": {
+    "accepted_measurement_count": 1339,
+    "canonical_unit": "m3",
+    "duplicate_row_count": 0,
+    "meter_count": 5,
+    "source_row_count": 1339,
+    "utc_normalized": true
+  },
+  "reproducibility": {
+    "alarms_sha256": "c09f8038c773ae533b1813954be60e0036647901cf763545911e7c4176a46f90",
+    "import_audit_sha256": "25fe19062f862c9a309f8c7f89ab90d8bb951ba1ffb2cb73a1946fe48ff8ae6f",
+    "input_sha256": "9b40ecc18e880e64bf856a82080a74f54d1f48c69b33ebeaa35ecc24fa70ade8",
+    "measurements_sha256": "4462922713418ef1297e954437c21f0dcc18def74aa4d62124f48b594f177f96",
+    "water_balance_sha256": "55abf3d9c75c5c6b6878c45ef4ef706539387db30682a1c97b282f5f724c1262"
+  },
+  "results": {
+    "stored_measurement_count": 1536
+  },
+  "schema_version": "1.0",
+  "source": {
+    "field_data": false,
+    "kind": "frozen_representative_vendor_export",
+    "limitation": "The export preserves external file conventions but is derived from a controlled simulation reference; it validates substitution, not field performance.",
+    "path": "../fixtures/experiment_5/vendor_meter_export.csv",
+    "sha256": "9b40ecc18e880e64bf856a82080a74f54d1f48c69b33ebeaa35ecc24fa70ade8"
+  },
+  "water_balance": {
+    "alarm_count": 45,
+    "alarm_threshold_l_min": 0.15,
+    "common_window_count": 197,
+    "false_alarm_count_outside_reference_windows": 0,
+    "good_quality_window_count": 88,
+    "maximum_residual_l_min": 0.34000000000000696,
+    "maximum_window_duration_seconds": 1800,
+    "minimum_window_duration_seconds": 300,
+    "reference_event_detection": {
+      "apartment_meter_underregistration": {
+        "alarm_window_count": 9,
+        "detected": true,
+        "detection_delay_seconds": 600
+      },
+      "unmetered_leak": {
+        "alarm_window_count": 36,
+        "detected": true,
+        "detection_delay_seconds": 300
+      }
+    },
+    "source_identifiable_from_balance_alone": false,
+    "suspect_quality_window_count": 109
+  }
+}

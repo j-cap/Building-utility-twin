@@ -2,7 +2,7 @@
 \usepackage[margin=25mm]{geometry}
 \usepackage{amsmath,amssymb,booktabs,graphicx,hyperref,placeins}
 \usepackage{xcolor}
-\graphicspath{{../results/experiment_0/}{../results/experiment_1/}{../results/experiment_2/}{../results/experiment_3/}{../results/experiment_4/}}
+\graphicspath{{../results/experiment_0/}{../results/experiment_1/}{../results/experiment_2/}{../results/experiment_3/}{../results/experiment_4/}{../results/experiment_5/}}
 \hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue}
 
 \title{Building Utility Twin\\\large Simulation Framework and Experiment Plan}
@@ -33,6 +33,9 @@ Iteration D expands the topology to multiple apartments and replaces the
 instantaneous boiler with a dynamic shared domestic-hot-water store.
 Iteration E composes this building with imperfect meter telemetry and adds the
 first operational reconciliation and anomaly-detection layer.
+Iteration F exercises the architecture's central substitution claim by replacing
+the simulator-facing source with a configurable CSV adapter while retaining the
+canonical contract, file store, and water-balance calculation.
 
 \section{System architecture}
 The intended data path is
@@ -842,13 +845,136 @@ residuals can expose controlled departures, and the experiment identifies which
 business claim the present sensor topology cannot yet support.
 
 \FloatBarrier
+\section{Iteration F: external-file adapter substitution}
+Experiment~5 tests whether a device-like external file can replace the simulated
+measurement source without changing downstream contracts. The experiment starts
+at the ingestion boundary: its runner never invokes the physical simulator,
+virtual meter, telemetry generator, or register reconciler. Instead it performs
+the following fixed path:
+\begin{equation}
+  \begin{aligned}
+  \text{vendor CSV}&\rightarrow\text{CSV adapter}
+  \rightarrow\text{canonical measurement}\\
+  &\rightarrow\text{JSONL store}
+  \rightarrow\text{water-balance analytics}.
+  \end{aligned}
+\end{equation}
+
+\subsection{Source fixture and adapter contract}
+No real building export was supplied for this iteration. The checked-in source
+is therefore a \emph{frozen representative vendor-format fixture}, derived once
+from the delivered and reconciled water-register evidence of Experiment~4. This
+choice preserves known reference anomalies and missing-readout patterns while
+introducing an independently parsed external representation. It is useful for
+interface verification, but it is neither historical field data nor evidence of
+field performance.
+
+The fixture contains 1,339 readings from one building meter and four apartment
+meters. It deliberately uses semicolon delimiters, German source headings,
+naive local Europe/Vienna timestamps, decimal-comma numbers, litre registers,
+vendor meter identifiers, and the status codes \texttt{OK} and
+\texttt{GESCHAETZT}. A versioned JSON configuration maps source fields, meter
+identifiers, roles, quality codes, timestamp semantics, and units. The adapter
+normalizes timestamps to UTC, converts litres to canonical cubic metres, maps
+quality to the shared vocabulary, and creates deterministic measurement IDs.
+
+Input validation rejects missing columns, unknown meters or status codes,
+invalid timestamps, non-finite or negative registers, non-monotonic series, and
+conflicting readings for the same meter and timestamp. Exact duplicate rows are
+accepted once with an explicit audit disposition. Every source row receives an
+audit entry, and the configured SHA-256 digest pins the fixture used by the
+acceptance run.
+
+\subsection{Imported-data-only analysis and acceptance}
+Water balance is calculated solely from persisted canonical register readings.
+The adapter configuration assigns each asset either the building or apartment
+role; the analysis intersects their observation timestamps and applies the same
+successive-register equation used in Experiment~4. Missing timestamps lengthen
+a window instead of becoming zero consumption. A window is marked suspect when
+any start or end register has suspect quality, and an alarm is raised at
+$|r^q_{ij}|\geq0.15\,\mathrm{L\,min^{-1}}$.
+
+Reference periods are used only to score this controlled substitution test:
+03:00--07:00 UTC for the unmetered leak and 11:00--15:00 UTC for apartment-meter
+under-registration. Acceptance requires the input hash to match, every source
+row to be converted, every register to remain monotonic, the canonical JSONL
+round trip to preserve all imported and derived measurements, both reference
+periods to be detected, no alarm outside those periods, and two independent
+runs to produce byte-identical machine-readable artifacts.
+
+The complete suite contains 35 passing tests. The new adapter tests cover local
+time and decimal-comma conversion, litre-to-cubic-metre normalization, quality
+mapping, exact deduplication, and rejection of unknown, negative, and conflicting
+input. The end-to-end test executes the frozen import, storage, and analytics
+path twice and compares its measurement, audit, balance, alarm, and summary
+files byte-for-byte.
+
+\section{Experiment 5 results}
+All 1,339 source rows were accepted into canonical measurements. The five sparse
+series yield 197 common balance windows ranging from five to 30 minutes. The
+analysis adds one canonical residual measurement per window, so the store holds
+1,536 records. Table~\ref{tab:experiment5-results} summarizes the run.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Experiment~5 adapter-substitution results.}
+  \label{tab:experiment5-results}
+  \begin{tabular}{lr}
+    \toprule
+    Metric & Result \\
+    \midrule
+    Source / accepted rows & 1,339 / 1,339 \\
+    Water meters & 5 \\
+    Canonical stored measurements & 1,536 \\
+    Common windows / duration range & 197 / 5--30 min \\
+    Good / suspect windows & 88 / 109 \\
+    Alarm threshold / peak residual & 0.15 / 0.340 L/min \\
+    Leak alarms / detection delay & 36 / 300 s \\
+    Meter-fault alarms / detection delay & 9 / 600 s \\
+    Alarms outside reference periods & 0 \\
+    Input digest matched / acceptance & yes / pass \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\FloatBarrier
+Figure~\ref{fig:experiment5} shows the source-substituted path. The imported
+building and apartment registers retain their sparse observation pattern. Their
+common-window volume increments agree outside the reference periods. During the
+leak period the residual stays near $0.30\,\mathrm{L\,min^{-1}}$; during
+under-registration it is intermittent because missing registered volume depends
+on apartment~201 demand. Both exceed the unchanged threshold, with first-window
+detection delays of five and ten minutes respectively.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.90\linewidth]{experiment_5_file_adapter.png}
+  \caption{Experiment~5. Top: cumulative water registers parsed from the
+  vendor-format CSV; middle: building and summed-apartment volume over successive
+  common windows; bottom: canonical-data water-balance residual and alarms.
+  Green and amber bands mark the two controlled reference periods.}
+  \label{fig:experiment5}
+\end{figure}
+
+The result supports the architectural claim that a configured external adapter
+can replace the simulated source without changing canonical storage or the
+balance algorithm. It does not validate operational performance on real meter
+exports: the fixture is derived from a known simulation, contains one day and
+one vendor layout, has no daylight-saving transition, and inherits the anomaly
+sizes and threshold selected for Experiment~4. The aggregate residual also
+retains the same identifiability limit: it signals missing volume but cannot
+distinguish a leak from meter under-registration without additional evidence.
+
+\FloatBarrier
 \section{Planned extensions}
-Experiment~5 will replace a simulated source with a historical meter export or
-API adapter while preserving the canonical contract, storage, and analysis
-layers. In parallel, a broader validation campaign should vary demand and
-telemetry seeds, anomaly sizes and durations, threshold selection data, and
-overlap between physical and sensor faults. A real pilot must also define the
-extra evidence required to distinguish leaks from meter errors.
+Experiment~6 should replace the representative fixture with an unmodified,
+de-identified export from a physical meter system and record export-version,
+timezone, counter rollover, missingness, and calibration metadata. A separate
+training or baseline period should select thresholds before held-out evaluation.
+In parallel, a broader validation campaign should vary demand and telemetry
+seeds, anomaly sizes and durations, threshold selection data, and overlap
+between physical and sensor faults. A pilot must also define the extra evidence
+required to distinguish leaks from meter errors.
 
 \clearpage
 \begingroup
